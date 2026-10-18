@@ -58,11 +58,11 @@ def handle(conn, req: ChatRequest, now: datetime | None = None, client=None) -> 
     return _question(conn, convo, req.message, now, client)
 
 
-def _llm_answer(client, question, hits, asker, recipient) -> dict | None:
+def _llm_answer(client, question, hits, asker, recipient, experts) -> dict | None:
     """One LLM call for the answer and DM draft. The real client goes through the disk cache;
     tests pass a fake client, which is called directly so nothing gets cached."""
     messages = [{"role": "system", "content": SYSTEM},
-                {"role": "user", "content": build_prompt(question, hits, asker, recipient)}]
+                {"role": "user", "content": build_prompt(question, hits, asker, recipient, experts)}]
     try:
         if client is None:
             raw = llm.cached_chat(messages, validate=parse_reply)
@@ -118,11 +118,11 @@ def answer_question(conn, question: str, asker: Person, now: datetime, client=No
     routing, contact = routing_text(experts)
     recipient = people[contact.person_id] if contact else None
 
-    reply = _llm_answer(client, question, hits, asker, recipient)
+    reply = _llm_answer(client, question, hits, asker, recipient, experts)
     if reply:
-        # The answer explains the code; who to ask is the routing sentence's job, so no names at all
+        # Only people find_experts returned may be named; anyone else's sentence is cut
         answer = normalize_markers(reply["answer"])
-        answer = drop_unlisted_people(answer, load_org().people, allowed=set())
+        answer = drop_unlisted_people(answer, load_org().people, allowed={e.person_id for e in experts})
         answer = cite_mentioned_prs(answer, hits)
         answer, order = renumber_citations(answer, len(hits))
         answer = drop_uncited(answer)

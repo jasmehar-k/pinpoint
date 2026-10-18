@@ -149,11 +149,11 @@ from schema import ChatRequest  # noqa: E402
 
 
 class FakeLLM:
-    """Returns a fixed reply with one bad citation and one name the agent must not show."""
+    """Returns a fixed reply with one bad citation and one name find_experts didn't return."""
 
     def __init__(self):
         content = _json.dumps({
-            "answer": "Provider webhooks enqueue a sync job directly [1]. Victor Hale designed it. "
+            "answer": "Provider webhooks enqueue a sync job directly [1]. Ravi Menon designed it. "
                       "The cron is the fallback [2][9].",
             "dm": "Hi Marcus, I'm Priya and just joined Integrations. Could you walk me through how webhook "
                   "sync works (#26180)? 30 minutes this week would be great.",
@@ -178,7 +178,7 @@ def test_full_demo_flow(conn, cleanup, monkeypatch):
     first = handle(conn, ChatRequest(message="How does inbound email sync work?", user="priya-shah"), client=FakeLLM())
 
     text = first.reply.text
-    assert "Victor Hale designed it" not in text and "[9]" not in text
+    assert "Ravi Menon designed it" not in text and "[9]" not in text  # not in find_experts
     assert [c.id for c in first.reply.citations] == ["1", "2"]
     assert "so I'd start with Marcus" in text
     assert first.experts[0].person_id == "marcus-lee" and first.experts[0].badge == "recommended"

@@ -111,10 +111,9 @@ note"). Every sentence must end with at least one source number in square bracke
 mention a PR number, cite the source that is that PR. PR sources are merged code changes and are \
 the most reliable; THREAD sources are team discussions. Base the answer on PRs where they cover the \
 question, and never name a class, function, file or event that isn't written in a source. If the \
-question only asks who to talk to, give a short primer on the topic instead: what it is and what \
-changed recently, from the sources. If the sources don't answer it, say so in one sentence. Never \
-mention people, who replied, or "the thread", and don't recommend who to ask; that is handled \
-separately.
+sources don't answer it, say so in one sentence. The only people you may name are the ones listed \
+under "People who know this"; never name anyone else. If the question asks who to talk to, answer \
+it with those people and what they did, citing the sources that show it.
 
 dm: a short, friendly Slack message from the asker to the recipient. Open by introducing the asker \
 in a few words using their role and team (for a new hire: "I'm Priya, new on Integrations"), then \
@@ -123,11 +122,14 @@ one relevant PR number from the sources (like #26180) if there is one. Use first
 em dashes."""
 
 
-def build_prompt(question: str, hits: list[Hit], asker: Person, recipient: Person | None) -> str:
+def build_prompt(question: str, hits: list[Hit], asker: Person, recipient: Person | None,
+                 experts: list[Expert] = ()) -> str:
     lines = ["Sources:"]
     for i, h in enumerate(hits, 1):
         kind = "PR" if h.source == "github" else "THREAD"
         lines.append(f"[{i}] ({kind}) {h.title}\n{' '.join(h.snippet.split())}")
+    lines += ["", "People who know this (the only people you may name):"]
+    lines += [f"- {e.name}, {e.role} on {e.team}: {e.evidence_summary}" for e in experts] or ["- none"]
     lines += ["", f"Question: {question}", "",
               f"Asker: {asker.name}, {asker.role} on {asker.team}."]
     lines.append(f"Recipient: {recipient.name}, {recipient.role} on {recipient.team}." if recipient
