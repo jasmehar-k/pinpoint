@@ -3,9 +3,11 @@ import Link from "next/link";
 import { USE_FIXTURES } from "@/lib/api";
 import { DEMO_USER } from "@/lib/demo";
 
+import { PaletteButton } from "./CommandPalette";
 import { SyncStatus } from "./SyncStatus";
 
-export function Header() {
+// palette: show the ⌘K button (only where a CommandPalette is mounted, i.e. the main page).
+export function Header({ palette = false }: { palette?: boolean }) {
   const initials = DEMO_USER.name
     .split(" ")
     .map((w) => w[0])
@@ -24,6 +26,7 @@ export function Header() {
           {USE_FIXTURES && (
             <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">Fixtures</span>
           )}
+          {palette && <PaletteButton />}
           <SyncStatus />
           <div className="flex items-center gap-2">
             <span aria-hidden className="flex size-8 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-white">
