@@ -229,3 +229,28 @@ def test_golden_thread_page(conn):
 ])
 def test_non_code_topics_route_to_ops(conn, question, owners):
     assert _ranked_ids(conn, question)[0] in owners
+
+
+def test_failed_booking_can_be_retried_with_another_slot(conn, cleanup):
+    from schema import ScheduleMeetingPayload
+    attendees = ["priya-shah", "marcus-lee"]
+    free = get_availability(conn, attendees, datetime.now(UTC)).mutual_free_slots
+    busy_slot = free[0]
+    # take the first free slot with a throwaway meeting, then try to book it
+    blocker = "mtg-test-blocker"
+    conn.execute("insert into meetings (id, title, attendees, start_at, end_at, seeded) values (%s, 'blocker', %s, %s, %s, false)",
+                 (blocker, attendees, busy_slot.start, busy_slot.end))
+    conn.commit()
+    cleanup.append(("meeting", blocker))
+    action = _actions.create(conn, "schedule_meeting",
+                             ScheduleMeetingPayload(title="t", attendees=attendees, slot=busy_slot), "priya-shah")
+    cleanup.append(("action", action.id))
+
+    failed = _actions.approve(conn, action.id)
+    assert failed.status == "failed" and "no longer free" in failed.result["error"]
+
+    retry = _actions.approve(conn, action.id, {"title": "t", "attendees": attendees,
+                                               "slot": free[1].model_dump(mode="json")})
+    assert retry.status == "executed", retry.result
+    cleanup.append(("meeting", retry.result["meeting_id"]))
+    assert _actions.approve(conn, action.id).result == retry.result  # and now it's done for good

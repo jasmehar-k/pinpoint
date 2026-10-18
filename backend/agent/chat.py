@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 
 import llm
 from agent import actions
-from agent.compose import (SYSTEM, build_prompt, drop_unlisted_people, fallback_answer, fallback_dm,
+from agent.compose import (SYSTEM, build_prompt, cite_top_sources, drop_unlisted_people, fallback_answer, fallback_dm,
                            intent, named_expert, parse_reply, pick_slot, renumber_citations,
                            routing_text, slot_label, slot_preference, tidy_dm)
 from graph.availability import get_availability
@@ -59,14 +59,17 @@ def handle(conn, req: ChatRequest, now: datetime | None = None, client=None) -> 
 
 
 def _llm_answer(client, question, hits, asker, recipient) -> dict | None:
-    client = client or llm.client()
+    """One LLM call for the answer and DM draft. The real client goes through the disk cache;
+    tests pass a fake client, which is called directly so nothing gets cached."""
+    messages = [{"role": "system", "content": SYSTEM},
+                {"role": "user", "content": build_prompt(question, hits, asker, recipient)}]
     try:
-        res = client.chat.completions.create(
-            model=llm.model(), temperature=0.3, extra_body=llm.reasoning(),
-            messages=[{"role": "system", "content": SYSTEM},
-                      {"role": "user", "content": build_prompt(question, hits, asker, recipient)}],
-        )
-        return parse_reply(res.choices[0].message.content)
+        if client is None:
+            raw = llm.cached_chat(messages, validate=parse_reply)
+        else:
+            res = client.chat.completions.create(model=llm.model(), temperature=0.3, messages=messages)
+            raw = res.choices[0].message.content
+        return parse_reply(raw)
     except Exception as e:  # rate limits, bad JSON, network: fall back to code-written text
         print(f"chat LLM call failed: {type(e).__name__}: {str(e)[:200]}")
         return None
@@ -108,6 +111,8 @@ def _question(conn, convo: Conversation, question: str, now: datetime, client) -
         answer, order = renumber_citations(answer, len(hits))
         if not answer:
             answer, order = fallback_answer(hits)
+        elif not order and hits:
+            answer, order = cite_top_sources(answer, len(hits))
     else:
         answer, order = fallback_answer(hits)
 

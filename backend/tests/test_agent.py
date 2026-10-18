@@ -141,3 +141,9 @@ def test_tidy_dm():
     marcus = next(p for p in PEOPLE if p.id == "marcus-lee")
     assert tidy_dm("Hey Marcus Lee, I want to understand sync—specifically webhooks.", marcus) == \
         "Hey Marcus, I want to understand sync, specifically webhooks."
+
+
+def test_cite_top_sources():
+    from agent.compose import cite_top_sources
+    assert cite_top_sources("Open a hotfix PR.", 6) == ("Open a hotfix PR. (Sources: [1][2])", [0, 1])
+    assert cite_top_sources("x", 1) == ("x (Sources: [1])", [0])

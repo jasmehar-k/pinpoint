@@ -177,6 +177,12 @@ def tidy_dm(text: str, recipient: Person) -> str:
     return re.sub(r",\s*,", ",", text).strip()
 
 
+def cite_top_sources(answer: str, n_sources: int, n: int = 2) -> tuple[str, list[int]]:
+    """The model answered from the sources but forgot to cite: attach the best ones it was given."""
+    order = list(range(min(n, n_sources)))
+    return f"{answer} (Sources: {''.join(f'[{i + 1}]' for i in order)})", order
+
+
 def fallback_answer(hits: list[Hit]) -> tuple[str, list[int]]:
     """When the LLM fails: point at the best sources instead of answering."""
     top = hits[:3]

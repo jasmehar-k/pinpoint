@@ -56,7 +56,11 @@ uv run python -m scripts.seed             # ~300 seeded threads; LLM output cach
 uv run python -m scripts.embed            # embed artifacts missing a vector (resumable)
 uv run python -m scripts.score            # rebuild the expertise table
 uv run python -m scripts.gen_meetings     # demo-week calendars + open review counts
+uv run python -m scripts.reset_demo [--keep-slack]   # between rehearsals: deletes Pinpoint's Slack DMs, actions, booked meetings; regenerates calendars. Restart the API after
+uv run python -m scripts.warm_demo        # runs seed/demo_questions.py so answers are in the LLM cache
 ```
+
+LLM answers are cached on disk by exact prompt (`backend/data/llm_cache/`), so warmed demo questions answer in about a second and survive OpenRouter outages. Delete that folder to force fresh answers. The API reads `.env` only at startup: restart it after changing `PINPOINT_MODE`.
 
 After any ingest or seed step, run `embed` then `score`, then `pytest -m demo`. Background commands don't inherit `cd`; use `uv run --directory /abs/path/backend ...`.
 

@@ -1,7 +1,8 @@
 """send_message and schedule_meeting never run directly: the agent creates a pending action, and
 only POST /actions/{id}/approve executes it.
 
-Approve claims the row with `where status = 'pending'`, so a double click runs it once.
+Approve claims the row with `where status in ('pending', 'failed')`, so a double click runs it
+once and a failed action (which did nothing) can be retried, e.g. with a different slot.
 Sends go to real Slack only in live mode for people with a slack_user_id; otherwise they're
 simulated (the action still records what would have been sent)."""
 
@@ -55,7 +56,8 @@ def _finish(conn, action_id: str, status: str, result: dict) -> PendingAction:
 
 def reject(conn, action_id: str) -> PendingAction:
     row = conn.execute(
-        f"update pending_actions set status = 'rejected' where id = %s and status = 'pending' returning {_COLUMNS}",
+        f"update pending_actions set status = 'rejected' where id = %s and status in ('pending', 'failed') "
+        f"returning {_COLUMNS}",
         (action_id,),
     ).fetchone()
     conn.commit()
@@ -68,7 +70,7 @@ def reject(conn, action_id: str) -> PendingAction:
 
 
 def approve(conn, action_id: str, payload: dict | None = None, now: datetime | None = None) -> PendingAction:
-    """Execute a pending action once. Returns the action in its final state."""
+    """Execute a pending (or previously failed) action once. Returns the action in its final state."""
     now = now or datetime.now(UTC)
     current = get(conn, action_id)
     if current is None:
@@ -80,7 +82,7 @@ def approve(conn, action_id: str, payload: dict | None = None, now: datetime | N
     row = conn.execute(
         f"""
         update pending_actions set status = 'executed', executed_at = %s, payload = coalesce(%s, payload)
-        where id = %s and status = 'pending' returning {_COLUMNS}
+        where id = %s and status in ('pending', 'failed') returning {_COLUMNS}
         """,
         (now, Jsonb(payload) if payload is not None else None, action_id),
     ).fetchone()
