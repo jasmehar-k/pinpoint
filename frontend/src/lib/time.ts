@@ -22,6 +22,15 @@ export function dayKey(iso: string): string {
   return dayKeyFmt.format(new Date(iso));
 }
 
+// "just now", "12 min ago", "3 h ago", then days: for sync status.
+export function minutesAgo(iso: string, now: Date = new Date()): string {
+  const minutes = Math.floor((now.getTime() - new Date(iso).getTime()) / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 24 * 60) return `${Math.floor(minutes / 60)} h ago`;
+  return timeAgo(iso, now);
+}
+
 // "2 days ago", for evidence timestamps.
 export function timeAgo(iso: string, now: Date = new Date()): string {
   const days = Math.floor((now.getTime() - new Date(iso).getTime()) / 86_400_000);

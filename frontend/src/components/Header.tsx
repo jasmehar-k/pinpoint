@@ -3,6 +3,8 @@ import Link from "next/link";
 import { USE_FIXTURES } from "@/lib/api";
 import { DEMO_USER } from "@/lib/demo";
 
+import { SyncStatus } from "./SyncStatus";
+
 export function Header() {
   const initials = DEMO_USER.name
     .split(" ")
@@ -22,8 +24,7 @@ export function Header() {
           {USE_FIXTURES && (
             <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">Fixtures</span>
           )}
-          {/* No sync timestamp from the backend yet, so no "3 min ago". */}
-          <span className="hidden font-mono text-xs text-zinc-500 md:inline">Synced: Slack · GitHub</span>
+          <SyncStatus />
           <div className="flex items-center gap-2">
             <span aria-hidden className="flex size-8 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-white">
               {initials}
