@@ -39,8 +39,8 @@ def test_format_reply():
     assert format_reply(a, "http://app").splitlines() == [
         "Webhooks enqueue a job <https://gh/1|[1]>.",
         "",
-        "*Who knows this*",
-        "• *Marcus Lee* (Integrations): reviewed 38 of Dana's Messaging PRs · 35% booked this week · *best bet*",
+        "*Who knows messaging*",
+        "*Marcus Lee* · reviewed 38 of Dana's Messaging PRs · 35% booked this week · *best bet*",
         "",
-        "_Want a DM drafted or time booked? Ask in <http://app|Pinpoint>._",
+        "<http://app|Open in Pinpoint> to draft a DM or book time.",
     ]

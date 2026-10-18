@@ -6,7 +6,9 @@ Pure pieces here; scripts/help_bot.py polls Slack every ~30s (no Events API, so 
 import re
 
 from agent.chat import Answered
+from graph.experts import topic_label
 from schema import Citation, Person
+from topics import TOPICS
 
 GUEST = Person(id="slack-guest", name="A teammate", team="Acme", role="engineer", manager=None,
                github_login=None, slack_handle="guest")
@@ -36,13 +38,16 @@ def slack_links(text: str, citations: list[Citation], app_url: str) -> str:
 
 
 def format_reply(a: Answered, app_url: str) -> str:
+    """Layout follows frontend/mockups/2-4 (#help fast path)."""
     lines = [slack_links(a.text, a.citations, app_url)]
     if a.experts:
-        lines += ["", "*Who knows this*"]
+        topic = a.experts[0].topic
+        area = topic_label(topic).lower() if topic in TOPICS else "this"
+        lines += ["", f"*Who knows {area}*"]
         for e in a.experts:
             summary = e.evidence_summary[0].lower() + e.evidence_summary[1:]
             booked = f" · {e.availability.booked_pct:.0%} booked this week" if e.availability else ""
             tag = " · *best bet*" if e.badge == "recommended" else ""
-            lines.append(f"• *{e.name}* ({e.team}): {summary}{booked}{tag}")
-    lines += ["", f"_Want a DM drafted or time booked? Ask in <{app_url}|Pinpoint>._"]
+            lines.append(f"*{e.name}* · {summary}{booked}{tag}")
+    lines += ["", f"<{app_url}|Open in Pinpoint> to draft a DM or book time."]
     return "\n".join(lines)
