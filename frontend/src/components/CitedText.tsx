@@ -8,16 +8,18 @@ export function isInternal(url: string): boolean {
   return url.startsWith("/");
 }
 
-export function CitationLink({ citation, className, children }: { citation: Citation; className?: string; children: ReactNode }) {
-  if (isInternal(citation.url)) {
+type LinkProps = { url: string; title: string; className?: string; children: ReactNode };
+
+export function SourceLink({ url, title, className, children }: LinkProps) {
+  if (isInternal(url)) {
     return (
-      <Link href={citation.url} className={className} title={citation.title}>
+      <Link href={url} className={className} title={title}>
         {children}
       </Link>
     );
   }
   return (
-    <a href={citation.url} target="_blank" rel="noreferrer" className={className} title={citation.title}>
+    <a href={url} target="_blank" rel="noreferrer" className={className} title={title}>
       {children}
     </a>
   );
@@ -38,9 +40,9 @@ export function CitedText({ text, citations }: { text: string; citations: Citati
             const citation = byId.get(part.match(/^\[(\d+)\]$/)?.[1] ?? "");
             if (!citation) return part;
             return (
-              <CitationLink key={j} citation={citation} className={chip}>
+              <SourceLink key={j} url={citation.url} title={citation.title} className={chip}>
                 {citation.id}
-              </CitationLink>
+              </SourceLink>
             );
           })}
         </p>
@@ -58,9 +60,9 @@ export function SourceList({ citations }: { citations: Citation[] }) {
       {citations.map((c) => (
         <li key={c.id} className="flex min-w-0 items-baseline gap-2">
           <span className={chip}>{c.id}</span>
-          <CitationLink citation={c} className="line-clamp-2 min-w-0 text-zinc-700 hover:underline dark:text-zinc-300">
+          <SourceLink url={c.url} title={c.title} className="line-clamp-2 min-w-0 text-zinc-700 hover:underline dark:text-zinc-300">
             {c.title}
-          </CitationLink>
+          </SourceLink>
           <span className="shrink-0 text-xs text-zinc-500">{SOURCE_LABEL[c.source]}</span>
         </li>
       ))}
