@@ -67,7 +67,7 @@ def reject(conn, action_id: str) -> PendingAction:
     if row is None:
         current = get(conn, action_id)
         if current is None:
-            raise ActionError("not found")
+            raise ActionError("This draft no longer exists. Ask again to get a new one.")
         return current
     return _row_to_action(row)
 
@@ -77,7 +77,7 @@ def approve(conn, action_id: str, payload: dict | None = None, now: datetime | N
     now = now or datetime.now(UTC)
     current = get(conn, action_id)
     if current is None:
-        raise ActionError("not found")
+        raise ActionError("This draft no longer exists. Ask again to get a new one.")
     if payload is not None:
         model = SendMessagePayload if current.kind == "send_message" else ScheduleMeetingPayload
         payload = model.model_validate(payload).model_dump(mode="json")
@@ -146,9 +146,9 @@ def rewrite(conn, action_id: str, style: str = "shorter") -> PendingAction:
     """Redraft a pending DM. Falls back to its first two sentences if the LLM fails."""
     current = get(conn, action_id)
     if current is None:
-        raise ActionError("not found")
+        raise ActionError("This draft no longer exists. Ask again to get a new one.")
     if current.kind != "send_message" or current.status not in ("pending", "failed"):
-        raise ValueError("only pending DMs can be rewritten")
+        raise ValueError("This message was already sent, so it can't be rewritten.")
     people = people_by_id()
     recipient, asker = people[current.payload.to], people.get(current.requested_by)
     original = current.payload.text
@@ -181,7 +181,7 @@ def _schedule(conn, action: PendingAction, now: datetime) -> dict:
     meetings = load_meetings(conn, p.attendees, days)
     free = {s.start for s in free_slots(meetings, p.attendees, days, now)}
     if p.slot.start not in free:
-        raise ActionError("that slot is no longer free for everyone")
+        raise ActionError("That time was just taken. Pick another slot.")
     meeting_id = f"mtg-pinpoint-{uuid.uuid4().hex[:6]}"
     conn.execute(
         """

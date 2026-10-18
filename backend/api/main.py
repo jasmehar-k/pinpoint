@@ -56,7 +56,7 @@ def experts(q: str = Query(min_length=2), user: str | None = None) -> ExpertsRes
 def availability(people: str = Query(description="comma-separated person ids")) -> AvailabilityResponse:
     ids = [p for p in people.split(",") if p]
     if not ids:
-        raise HTTPException(422, "people is empty")
+        raise HTTPException(422, "Pick at least one person.")
     with db.connect(vector=False) as conn:
         return get_availability(conn, ids, datetime.now(UTC))
 
@@ -66,14 +66,14 @@ def artifact(artifact_id: str) -> ArtifactResponse:
     with db.connect(vector=False) as conn:
         found = get_artifact(conn, artifact_id)
     if found is None:
-        raise HTTPException(404, "no such artifact")
+        raise HTTPException(404, "We couldn't find that thread or PR.")
     return found
 
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest) -> ChatResponse:
     if req.user not in people_by_id():
-        raise HTTPException(422, f"unknown user {req.user!r}")
+        raise HTTPException(422, "We don't recognize this account.")
     with db.connect() as conn:
         return handle(conn, req)
 

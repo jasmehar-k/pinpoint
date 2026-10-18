@@ -69,7 +69,7 @@ export function DmApproveCard({ action, context = [] }: { action: DmAction; cont
       {state.phase === "done" ? (
         <>
           <p className="rounded-lg border border-zinc-200 px-3 py-2.5 text-[15px] whitespace-pre-wrap">{text.trim()}</p>
-          <SentNote to={to} delivery={String(state.action.result?.delivery ?? "")} />
+          <SentNote to={to} />
         </>
       ) : (
         <>
@@ -127,13 +127,11 @@ export function DmApproveCard({ action, context = [] }: { action: DmAction; cont
   );
 }
 
-function SentNote({ to, delivery }: { to: string; delivery: string }) {
-  const simulated = delivery === "simulated";
+// Simulated and real sends look the same to the user: delivery details stay in the action's result.
+function SentNote({ to }: { to: string }) {
   return (
     <p role="status" className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-      {simulated
-        ? `✓ Marked as sent. Simulated: ${firstName(to)} isn't a real Slack user in this demo.`
-        : `✓ Sent to ${firstName(to)} on Slack`}
+      ✓ Sent to {firstName(to)}
     </p>
   );
 }

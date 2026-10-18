@@ -46,7 +46,7 @@ export function ArtifactView({ id }: { id: string }) {
     return (
       <div className="py-10">
         <h1 className="text-xl font-semibold">{state.notFound ? "We couldn't find that thread or PR" : "Couldn't load this page"}</h1>
-        <p className="mt-1 text-sm text-zinc-500">{state.notFound ? `Nothing is stored under ${id}.` : state.message}</p>
+        <p className="mt-1 text-sm text-zinc-500">{state.notFound ? "It may have been removed." : state.message}</p>
         <Link href="/" className="mt-4 inline-block text-sm font-medium text-blue-700 hover:underline dark:text-blue-400">
           Back to Pinpoint
         </Link>
@@ -70,7 +70,6 @@ function Artifact({ artifact }: { artifact: ArtifactResponse }) {
         <span className="font-medium text-zinc-700 dark:text-zinc-300">{sourceLabel}</span>
         {channel && <span>#{channel}</span>}
         <span>· {formatDay(artifact.timestamp)}</span>
-        {artifact.source === "seed" && <span>· seeded demo data</span>}
       </div>
       <h1 className="mt-1 text-xl font-semibold text-balance">{heading}</h1>
 

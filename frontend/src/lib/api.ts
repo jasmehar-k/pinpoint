@@ -31,16 +31,19 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(url, init);
   } catch {
-    throw new ApiError(USE_FIXTURES ? "couldn't load the example data" : `can't reach the backend at ${API_URL}`, 0);
+    console.error(`request failed: ${url}`);
+    throw new ApiError("Pinpoint can't connect right now. Try again in a moment.", 0);
   }
   if (!res.ok) {
-    // FastAPI errors look like {"detail": "..."} or, for validation, {"detail": [{msg, ...}]}.
-    let message = `${url.replace(API_URL, "")} returned ${res.status}`;
+    // The backend writes its 4xx `detail` strings for users ("That time was just taken. ...").
+    // Anything else (5xx, validation lists) gets a plain message; the technical detail goes to the console.
+    let message = "Something went wrong. Try again in a moment.";
+    let detail: unknown;
     try {
-      const { detail } = await res.json();
-      if (typeof detail === "string") message = detail;
-      else if (Array.isArray(detail) && detail[0]?.msg) message = detail[0].msg;
+      ({ detail } = await res.json());
     } catch {}
+    if (res.status < 500 && typeof detail === "string") message = detail;
+    console.error(`${url.replace(API_URL, "")} returned ${res.status}`, detail);
     throw new ApiError(message, res.status);
   }
   return res.json();

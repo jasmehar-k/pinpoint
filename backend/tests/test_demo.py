@@ -247,7 +247,7 @@ def test_failed_booking_can_be_retried_with_another_slot(conn, cleanup):
     cleanup.append(("action", action.id))
 
     failed = _actions.approve(conn, action.id)
-    assert failed.status == "failed" and "no longer free" in failed.result["error"]
+    assert failed.status == "failed" and "just taken" in failed.result["error"]
 
     retry = _actions.approve(conn, action.id, {"title": "t", "attendees": attendees,
                                                "slot": free[1].model_dump(mode="json")})
