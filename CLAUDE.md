@@ -226,7 +226,7 @@ Slack sends go out as the bot ("Pinpoint, on behalf of Priya"). Sending as the u
 - Graph modes: Experts / Bus factor.
 - Chat shows answers with citation chips, expert cards (evidence line, availability bar, Busy/Recommended badge, "Not the right person?" correction link), approve cards for DMs and meetings, and a mini week view for scheduling.
 - Selecting an expert in chat highlights them in the graph, and vice versa.
-- Mockups exist for: main view, approve DM, book meeting, Slack #help fast path, bus factor view. Match them.
+- No mockups exist yet; Harshita (frontend lane) is designing them. Until then, design from this section, `docs/team.md` and the fixtures.
 
 Build the frontend against `/fixtures` JSON from hour 0. Swap to real endpoints when they land.
 
