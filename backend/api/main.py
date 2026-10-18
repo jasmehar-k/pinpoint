@@ -6,11 +6,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import config
 import db
+from agent import actions
+from agent.chat import handle
 from artifacts import get_artifact
 from embeddings import embed_query
 from graph.availability import get_availability
 from graph.experts import apply_availability, find_experts
-from schema import ArtifactResponse, AvailabilityResponse, ExpertsResponse, Health
+from org import people_by_id
+from schema import (ApproveRequest, ArtifactResponse, AvailabilityResponse, ChatRequest, ChatResponse,
+                    ExpertsResponse, Health, PendingAction)
 
 
 @asynccontextmanager
@@ -59,3 +63,32 @@ def artifact(artifact_id: str) -> ArtifactResponse:
     if found is None:
         raise HTTPException(404, "no such artifact")
     return found
+
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(req: ChatRequest) -> ChatResponse:
+    if req.user not in people_by_id():
+        raise HTTPException(422, f"unknown user {req.user!r}")
+    with db.connect() as conn:
+        return handle(conn, req)
+
+
+@app.post("/actions/{action_id}/approve", response_model=PendingAction)
+def approve(action_id: str, body: ApproveRequest | None = None) -> PendingAction:
+    payload = body.payload.model_dump(mode="json") if body and body.payload else None
+    with db.connect(vector=False) as conn:
+        try:
+            return actions.approve(conn, action_id, payload)
+        except actions.ActionError as e:
+            raise HTTPException(404, str(e))
+        except ValueError as e:  # payload didn't match the action kind
+            raise HTTPException(422, str(e))
+
+
+@app.post("/actions/{action_id}/reject", response_model=PendingAction)
+def reject(action_id: str) -> PendingAction:
+    with db.connect(vector=False) as conn:
+        try:
+            return actions.reject(conn, action_id)
+        except actions.ActionError as e:
+            raise HTTPException(404, str(e))

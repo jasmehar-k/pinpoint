@@ -122,3 +122,10 @@ def test_same_team_breaks_close_calls():
 def test_everyone_busy_means_no_recommendation():
     ranked = apply_availability([_expert("a", 5.0)], [_avail("a", 0.9, 0)])
     assert ranked[0].badge == "busy"
+
+
+def test_relevant_keeps_hits_near_the_best():
+    from graph.experts import relevant
+    hits = [_hit("a", 0.82), _hit("b", 0.75), _hit("c", 0.72), _hit("d", 0.70)]
+    assert [h.id for h in relevant(hits)] == ["a", "b", "c"]
+    assert relevant([]) == []

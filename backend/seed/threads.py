@@ -184,6 +184,31 @@ def scrub_pr_refs(text: str, allowed: set[str]) -> str:
     return _PR_REF.sub(fix, text)
 
 
+_PATH = re.compile(r"`?\b(?:[\w.-]+/)+[\w.-]+\.(?:ts|tsx|js|json|py|sql|yml|yaml)\b`?")
+
+
+def drop_invented_paths(text: str) -> str:
+    """Remove sentences naming a file path: the model wasn't given paths, so any it writes are made up."""
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    return " ".join(s for s in sentences if not _PATH.search(s)).strip()
+
+
+_BACKTICKED = re.compile(r"`([^`\n]+)`")
+_CAMEL = re.compile(r"\b[A-Za-z]*[a-z][A-Z][A-Za-z0-9]*\b")  # EmailSyncCompleted, afterSync
+
+
+def identifiers(text: str) -> set[str]:
+    return {m.strip() for m in _BACKTICKED.findall(text)} | set(_CAMEL.findall(text))
+
+
+def drop_unsupported_identifiers(text: str, context: str) -> str:
+    """Remove sentences naming code identifiers that aren't in the context the model was given.
+    Plausible-sounding class and event names are the main way generated threads go wrong."""
+    known = context.lower()
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    return " ".join(s for s in sentences if all(i.lower() in known for i in identifiers(s))).strip()
+
+
 def leaked_names(text: str, people: list[Person]) -> list[str]:
     """Persona full names or real GitHub logins that shouldn't be in generated text."""
     found = []
@@ -196,16 +221,23 @@ def leaked_names(text: str, people: list[Person]) -> list[str]:
 
 # ---- records ----
 
-def to_records(plan: ThreadPlan, texts: dict, people: dict[str, Person]) -> tuple[Artifact, list[Event]]:
+def to_records(plan: ThreadPlan, texts: dict, people: dict[str, Person]) -> tuple[Artifact, list[Event]] | None:
     """Turn a plan + generated text into the same Artifact/Event shapes the Slack connector emits."""
     allowed = {str(p["number"]) for p in plan.context_prs}
+    context = " ".join(f"{p['title']} {p['summary']}" for p in plan.context_prs)
     rng = random.Random(plan.id)
     messages = [(plan.asker, plan.start, texts["question"])]
     t = plan.start + timedelta(minutes=rng.randint(4, 90))
     messages.append((plan.answerers[0], t, texts["answer"]))
     if len(plan.answerers) > 1 and texts.get("followup"):
         messages.append((plan.answerers[1], t + timedelta(minutes=rng.randint(5, 60)), texts["followup"]))
-    messages = [(who, ts, scrub_pr_refs(msg, allowed)) for who, ts, msg in messages]
+    def check(msg):
+        msg = drop_invented_paths(scrub_pr_refs(msg, allowed))
+        return drop_unsupported_identifiers(msg, context) if plan.context_prs else msg
+    messages = [(who, ts, check(msg)) for who, ts, msg in messages]
+    if not messages[0][2] or not messages[1][2]:
+        return None  # nothing verifiable left in the question or the answer: drop the thread
+    messages = [m for m in messages if m[2]]
     return records_from_messages(plan.id, plan.channel, [plan.topic], messages, people)
 
 

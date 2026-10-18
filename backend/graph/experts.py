@@ -16,6 +16,9 @@ from search import Hit, search_artifacts
 from topics import TOPICS
 
 TOP_ARTIFACTS = 40
+# Only credit artifacts close to the best match. Without this, 30 loosely related PRs outvote the
+# 5 threads that actually answer the question (ops questions routed to the Head of Eng).
+RELATIVE_CUTOFF = 0.10
 MAX_EXPERTS = 5
 # Mention "reviewed N of <top expert>'s PRs" only when it's a real pattern
 REVIEWED_OF_MIN = 10
@@ -59,6 +62,11 @@ def rank_candidates(hits: list[Hit], events: list[EventRow], now: datetime,
         cand.score += c
         cand.evidence.append((c, e))
     return sorted(out.values(), key=lambda c: -c.score)
+
+
+def relevant(hits: list[Hit], cutoff: float = RELATIVE_CUTOFF) -> list[Hit]:
+    """Hits within `cutoff` similarity of the best one (hits come sorted best first)."""
+    return [h for h in hits if h.similarity >= hits[0].similarity - cutoff] if hits else []
 
 
 def topic_label(topic_id: str) -> str:
@@ -143,7 +151,7 @@ def find_experts(conn, query: str, asker_id: str | None = None, now: datetime | 
                  limit: int = MAX_EXPERTS) -> list[Expert]:
     now = now or datetime.now(UTC)
     people = people_by_id()
-    hits = search_artifacts(conn, query, k=TOP_ARTIFACTS)
+    hits = relevant(search_artifacts(conn, query, k=TOP_ARTIFACTS))
     exclude = {asker_id} if asker_id else set()
     ranked = rank_candidates(hits, _events_on(conn, [h.id for h in hits]), now, exclude)[:limit]
     if not ranked:

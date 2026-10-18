@@ -136,3 +136,96 @@ def test_artifact_page_for_a_pr(conn):
     a = get_artifact(conn, "github:pr:26180")
     assert a.kind == "pr" and a.messages is None and "messaging" in a.topics
     assert ("authored", "dana-okafor") in [(p.type, p.person_id) for p in a.people]
+
+
+# ---- full chat flow (fake LLM, real DB) ----
+
+import json as _json  # noqa: E402
+from types import SimpleNamespace  # noqa: E402
+
+from agent import actions as _actions  # noqa: E402
+from agent.chat import handle  # noqa: E402
+from schema import ChatRequest  # noqa: E402
+
+
+class FakeLLM:
+    """Returns a fixed reply with one bad citation and one name the agent must not show."""
+
+    def __init__(self):
+        content = _json.dumps({
+            "answer": "Provider webhooks enqueue a sync job directly [1]. Victor Hale designed it. "
+                      "The cron is the fallback [2][9].",
+            "dm": "Hi Marcus, I'm Priya and just joined Integrations. Could you walk me through how webhook "
+                  "sync works (#26180)? 30 minutes this week would be great.",
+        })
+        message = SimpleNamespace(content=content)
+        self.chat = SimpleNamespace(completions=SimpleNamespace(
+            create=lambda **_: SimpleNamespace(choices=[SimpleNamespace(message=message)])))
+
+
+@pytest.fixture
+def cleanup(conn):
+    created = []
+    yield created
+    for kind, id_ in created:
+        table = "meetings" if kind == "meeting" else "pending_actions"
+        conn.execute(f"delete from {table} where id = %s", (id_,))
+    conn.commit()
+
+
+def test_full_demo_flow(conn, cleanup, monkeypatch):
+    monkeypatch.setattr("config.MODE", "seeded")  # never DM a real person from a test
+    first = handle(conn, ChatRequest(message="How does inbound email sync work?", user="priya-shah"), client=FakeLLM())
+
+    text = first.reply.text
+    assert "Victor Hale designed it" not in text and "[9]" not in text
+    assert [c.id for c in first.reply.citations] == ["1", "2"]
+    assert "so I'd start with Marcus" in text
+    assert first.experts[0].person_id == "marcus-lee" and first.experts[0].badge == "recommended"
+    dm = first.pending_actions[0]
+    cleanup.append(("action", dm.id))
+    assert (dm.kind, dm.status, dm.payload.to) == ("send_message", "pending", "marcus-lee")
+
+    done = _actions.approve(conn, dm.id, {"to": "marcus-lee", "text": "edited text"})
+    assert done.status == "executed" and done.result == {"delivery": "simulated", "to": "marcus-lee"}
+    assert done.payload.text == "edited text"
+    assert _actions.approve(conn, dm.id).executed_at == done.executed_at  # double click: runs once
+
+    second = handle(conn, ChatRequest(message="can you book time with Marcus wednesday morning?",
+                                      user="priya-shah", conversation_id=first.conversation_id))
+    invite = second.pending_actions[0]
+    cleanup.append(("action", invite.id))
+    assert invite.kind == "schedule_meeting" and invite.payload.attendees == ["priya-shah", "marcus-lee"]
+    assert second.availability and second.reply.text.startswith(("You and Marcus are both free", "Marcus isn't free"))
+
+    booked = _actions.approve(conn, invite.id)
+    assert booked.status == "executed", booked.result
+    cleanup.append(("meeting", booked.result["meeting_id"]))
+    slots = get_availability(conn, ["priya-shah", "marcus-lee"], datetime.now(UTC)).mutual_free_slots
+    assert invite.payload.slot.start not in {s.start for s in slots}
+
+
+def test_redirect_drafts_to_the_named_expert(conn, cleanup):
+    first = handle(conn, ChatRequest(message="How does inbound email sync work?", user="priya-shah"), client=FakeLLM())
+    cleanup.append(("action", first.pending_actions[0].id))
+    second = handle(conn, ChatRequest(message="message Dana instead", user="priya-shah",
+                                      conversation_id=first.conversation_id))
+    cleanup.append(("action", second.pending_actions[0].id))
+    assert second.pending_actions[0].payload.to == "dana-okafor"
+    assert "Dana is 78% booked" in second.reply.text
+
+
+# ---- seeded threads ----
+
+def test_golden_thread_page(conn):
+    a = get_artifact(conn, "seed-thread-0042")
+    assert [m.person_id for m in a.messages] == ["aisha-bello", "dana-okafor", "marcus-lee", "aisha-bello"]
+    assert a.url == "/artifacts/seed-thread-0042" and a.topics == ["messaging"]
+
+
+@pytest.mark.parametrize("question,owners", [
+    ("How do I ship a hotfix before the release train?", {"ben-carter", "jordan-blake", "sam-patel"}),
+    ("Who handles on-call handover and paging?", {"sam-patel", "jordan-blake", "daniel-novak"}),
+])
+def test_non_code_topics_route_to_ops(conn, question, owners):
+    assert _ranked_ids(conn, question)[0] in owners

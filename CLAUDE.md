@@ -52,11 +52,13 @@ uv run python -m scripts.init_db          # apply schema.sql (idempotent)
 uv run python -m scripts.load_people      # upsert people.json + topics
 uv run python -m scripts.ingest_github [--days 182] [--refresh]   # raw pages cached in backend/data/raw/github
 uv run python -m scripts.ingest_slack [--days 90] [--channel help] [--no-tag] [--cached]   # public channels the bot is in; see docs/slack-setup.md
+uv run python -m scripts.seed             # ~300 seeded threads; LLM output cached in backend/data/raw/seed, reruns are free
 uv run python -m scripts.embed            # embed artifacts missing a vector (resumable)
 uv run python -m scripts.score            # rebuild the expertise table
+uv run python -m scripts.gen_meetings     # demo-week calendars + open review counts
 ```
 
-After any ingest or seed step, run `embed` then `score`, then `pytest -m demo`.
+After any ingest or seed step, run `embed` then `score`, then `pytest -m demo`. Background commands don't inherit `cd`; use `uv run --directory /abs/path/backend ...`.
 
 Pipeline steps go in `backend/scripts/` as `python -m scripts.<step>`.
 
@@ -194,7 +196,7 @@ score(person, topic) = sum over events e of: weight(type(e)) * 0.5 ^ (age_days(e
 Twenty's CODEOWNERS only covers CI/config files, so ownership comes mostly from authorship and reviews.
 
 - Store the top 3 evidence links per (person, topic).
-- `find_experts(query)`: embed the query, get the top 40 artifacts by similarity (20 was too few for prolific authors), aggregate the people on them by similarity x type weight x decay. The question's topic is the one most retrieved artifacts share (similarity-weighted); the evidence line uses that topic's `expertise` counts. Candidates who reviewed 10+ of the top expert's PRs in that topic get "Reviewed N of Dana's Messaging PRs". Code: `backend/graph/experts.py`, `backend/graph/scoring.py`.
+- `find_experts(query)`: embed the query, get the top 40 artifacts by similarity (20 was too few for prolific authors), keep those within 0.10 of the best match (otherwise dozens of loosely related PRs outvote the few threads that answer the question), aggregate the people on them by similarity x type weight x decay. The question's topic is the one most retrieved artifacts share (similarity-weighted); the evidence line uses that topic's `expertise` counts. Candidates who reviewed 10+ of the top expert's PRs in that topic get "Reviewed N of Dana's Messaging PRs". Code: `backend/graph/experts.py`, `backend/graph/scoring.py`.
 - Availability factor (0 to 1) from % of working hours booked this week + open review count. Final rank = expertise x availability. Compute availability only for the top 5 candidates.
 - Bus factor: per topic, count people above a score threshold. 1 = red, 2 = amber, 3+ = green.
 - Corrections ("I don't own this anymore", "ask X instead") write to `corrections` and down-weight or redirect that edge.
@@ -217,7 +219,16 @@ Hard rules for the agent:
 - Prefer experts on the user's own team when scores are close (read `user_profiles`).
 - `send_message` and `schedule_meeting` never execute directly. They create a `pending_actions` row. Only `POST /actions/{id}/approve` executes them.
 
-Slack sends go out as the bot ("Pinpoint, on behalf of Priya"). Sending as the user is out of scope.
+Slack sends go out as the bot ("Pinpoint, on behalf of Priya"). Sending as the user is out of scope. A send reaches real Slack only when `PINPOINT_MODE=live` and the recipient has a `slack_user_id`; otherwise it's simulated (`result.delivery = "simulated"`).
+
+**How it's built** (`backend/agent/`): the tools are plain functions, and the free model only writes prose, because it's slow (~20s per answer) and unreliable at multi-step tool loops.
+- **Question turn** (`chat.py`): code runs search -> `find_experts` -> availability, then one LLM call writes the answer with [n] citations plus the DM draft. Sources are labeled PR or THREAD, at most 3 threads, so real PRs anchor answers.
+- **Code enforces the hard rules** (`compose.py`): citations are renumbered and any marker without a source is dropped; the answer may not name anyone (routing is a code-written sentence from real numbers); the DM may name only the asker and recipient; LLM failure falls back to code-written text.
+- **Follow-ups** are detected by regex, not the LLM: "book time Wednesday 10:30" -> mutual free slots -> pending `schedule_meeting`; "message Dana instead" -> new DM draft.
+- **Approve** claims the row with `where status = 'pending'` (double clicks run once) and rechecks the slot before booking.
+- Conversation state is in memory, so restarting the API forgets open conversations.
+
+**Seeded threads are checked**: generated text may only use PR numbers and code identifiers that appear in the PRs given to that batch; sentences with anything else are dropped, and threads left with nothing verifiable are skipped (`seed/threads.py`).
 
 ## Frontend
 

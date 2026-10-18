@@ -5,6 +5,8 @@ from functools import cache
 
 from openai import OpenAI
 
+import config  # noqa: F401  loads .env
+
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
@@ -21,3 +23,10 @@ def model() -> str:
     if not name:
         raise RuntimeError("LLM_MODEL is not set. Pick a free OpenRouter model that supports tool calling.")
     return name
+
+
+def reasoning() -> dict:
+    """Reasoning effort for chat answers. "low" measured ~8s vs ~12s default on Nemotron with the
+    same answer quality; "off" was ~3s but refused to answer from the sources."""
+    effort = os.getenv("LLM_REASONING", "low")
+    return {"reasoning": {"enabled": False}} if effort == "off" else {"reasoning": {"effort": effort}}

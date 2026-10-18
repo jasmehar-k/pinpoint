@@ -88,7 +88,7 @@ def main() -> None:
                              exclude_askers={"priya-shah"})
         prs = {t: topic_prs(conn, t) for t in {p.topic for p in plans}}
 
-    records, skipped = golden_records(people, now), 0
+    records, skipped, dropped = golden_records(people, now), 0, 0
     for i, batch in enumerate(batches(plans)):
         topic = batch[0].topic
         pool = prs.get(topic) or []
@@ -102,7 +102,9 @@ def main() -> None:
         if texts is None:
             skipped += len(batch)
             continue
-        records += [to_records(plan, t, people) for plan, t in zip(batch, texts)]
+        built = [to_records(plan, t, people) for plan, t in zip(batch, texts)]
+        dropped += built.count(None)
+        records += [r for r in built if r]
         time.sleep(PAUSE)
 
     artifacts = [a for a, _ in records]
@@ -111,7 +113,8 @@ def main() -> None:
         conn.execute("delete from artifacts where source = 'seed'")  # events cascade
         store(conn, artifacts, events)
 
-    print(f"stored {len(artifacts)} seeded threads ({skipped} skipped after {ATTEMPTS} failed attempts)")
+    print(f"stored {len(artifacts)} seeded threads ({skipped} skipped after {ATTEMPTS} failed attempts, "
+          f"{dropped} dropped for unverifiable claims)")
     answers = Counter((a.topics[0], e.person_id) for a, es in records for e in es if e.type == "answered")
     for topic in sorted({t for t, _ in answers}):
         top = sorted(((n, p) for (t, p), n in answers.items() if t == topic), reverse=True)[:4]

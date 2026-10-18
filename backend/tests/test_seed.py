@@ -108,3 +108,23 @@ def test_golden_demo_thread():
     # the asker's own "thanks" is not an answer
     assert [e.person_id for e in events if e.type == "answered"] == ["dana-okafor", "marcus-lee"]
     assert all(a.timestamp.weekday() < 5 for a, _ in records.values())
+
+
+def test_drop_invented_paths():
+    from seed.threads import drop_invented_paths
+    text = "Sync starts from the webhook (#26180). The logic lives in `src/modules/email-sync/email-sync.service.ts`. Ask in #help."
+    assert drop_invented_paths(text) == "Sync starts from the webhook (#26180). Ask in #help."
+    assert drop_invented_paths("Version 2.20 shipped. See config.yml docs.") == "Version 2.20 shipped. See config.yml docs."
+
+
+def test_drop_unsupported_identifiers():
+    from seed.threads import drop_unsupported_identifiers
+    context = "Sync message channels from webhooks: enqueues one job via BullMQ with keepLastIfActive"
+    text = ("It uses BullMQ dedup (`keepLastIfActive`). Hook into the `afterSync` event. "
+            "Subscribe to EmailSyncCompleted. Webhooks enqueue a job.")
+    assert drop_unsupported_identifiers(text, context) == "It uses BullMQ dedup (`keepLastIfActive`). Webhooks enqueue a job."
+
+
+def test_threads_with_nothing_verifiable_are_dropped():
+    texts = {"question": "where is `EmailSyncService`?", "answer": "In EmailSyncService.", "followup": None}
+    assert to_records(_plan(["dana-okafor"]), texts, PEOPLE) is None
