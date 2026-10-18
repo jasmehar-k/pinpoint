@@ -105,16 +105,20 @@ SYSTEM = """You help a new engineer understand a codebase, using only the number
 
 Reply with only JSON: {"answer": "...", "dm": "..."}
 
-answer: 2 to 5 sentences answering the question from the sources. Cite every claim with the \
-source number in square brackets, like [1] or [2][3]. PR sources are merged code changes and are \
-the most reliable; THREAD sources are team discussions. Base the answer on PRs where they cover \
-the question, and never name a class, function, file or event that isn't written in a source. If the sources don't answer it, say so in \
-one sentence. Never mention any person by name, and don't recommend who to ask; that is handled \
-separately.
+answer: 2 to 5 sentences answering the question from the sources, written like a friendly senior \
+teammate on Slack: plain words, short sentences, no filler ("Additionally", "It is important to \
+note"). Cite every claim with the source number in square brackets, like [1] or [2][3]. When you \
+mention a PR number, cite the source that is that PR. PR sources are merged code changes and are \
+the most reliable; THREAD sources are team discussions. Base the answer on PRs where they cover the \
+question, and never name a class, function, file or event that isn't written in a source. If the \
+sources don't answer it, say so in one sentence. Never mention any person by name, and don't \
+recommend who to ask; that is handled separately.
 
-dm: a short, friendly Slack message from the asker to the recipient asking for 30 minutes this \
-week to talk through the question. 2 to 4 sentences, first person, mention one relevant PR number \
-from the sources (like #26180) if there is one. Use first names only, and no em dashes."""
+dm: a short, friendly Slack message from the asker to the recipient. Open by introducing the asker \
+in a few words using their role and team (for a new hire: "I'm Priya, new on Integrations"), then \
+ask for 30 minutes this week to talk through the question. 2 to 4 sentences, first person, mention \
+one relevant PR number from the sources (like #26180) if there is one. Use first names only, and no \
+em dashes."""
 
 
 def build_prompt(question: str, hits: list[Hit], asker: Person, recipient: Person | None) -> str:
@@ -140,6 +144,25 @@ def parse_reply(raw: str) -> dict:
     return {"answer": str(data["answer"]).strip(), "dm": str(data.get("dm") or "").strip()}
 
 
+_PR_MENTION = re.compile(r"#(\d{3,6})\b")
+
+
+def cite_mentioned_prs(answer: str, hits: list[Hit]) -> str:
+    """Put the right [n] right after every PR number the answer mentions, when that PR is one of
+    the sources, so "introduced in #26180" can't end up pointing at a different source."""
+    index = {h.id.removeprefix("github:pr:"): i for i, h in enumerate(hits) if h.id.startswith("github:pr:")}
+
+    def fix(m):
+        i = index.get(m.group(1))
+        if i is None:
+            return m.group(0)
+        marker = f"[{i + 1}]"
+        rest = answer[m.end():m.end() + len(marker) + 1]
+        return m.group(0) if marker in rest else f"{m.group(0)} {marker}"
+
+    return _PR_MENTION.sub(fix, answer)
+
+
 _MARKER = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
 
 
@@ -159,6 +182,7 @@ def renumber_citations(text: str, n_sources: int) -> tuple[str, list[int]]:
         return "".join(out)
 
     text = _MARKER.sub(fix, text)
+    text = re.sub(r"\]\s+\[", "][", text)  # "[1] [2]" -> "[1][2]"
     return re.sub(r"\s+([.,;])", r"\1", re.sub(r"[ \t]{2,}", " ", text)).strip(), order
 
 

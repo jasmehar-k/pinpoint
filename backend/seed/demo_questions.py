@@ -1,14 +1,18 @@
 """The questions we'll ask on stage. scripts/warm_demo runs them so their answers are cached.
-Edit this list when the demo script changes."""
+The cache matches exact text, so this must include every suggested question in
+frontend/src/lib/demo.ts, worded identically (tests/test_demo_questions.py checks)."""
 
 USER = "priya-shah"
 
 QUESTIONS = [
-    "How does inbound email sync work, and who should I ask?",
-    "Why would an IMAP mailbox sync but import nothing?",
+    # the frontend's suggestion buttons, word for word
+    "How does inbound email sync work?",
     "How are subscriptions and plan upgrades billed?",
-    "How do I ship a hotfix before the release train?",
     "How do workflow triggers and actions run?",
+    "Why does my Gmail mailbox import keep failing?",
+    # typed during the demo
+    "How do I ship a hotfix before the release train?",
+    "Why would an IMAP mailbox sync but import nothing?",
 ]
 
 FOLLOW_UPS = [

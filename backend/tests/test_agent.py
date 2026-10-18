@@ -147,3 +147,24 @@ def test_cite_top_sources():
     from agent.compose import cite_top_sources
     assert cite_top_sources("Open a hotfix PR.", 6) == ("Open a hotfix PR. (Sources: [1][2])", [0, 1])
     assert cite_top_sources("x", 1) == ("x (Sources: [1])", [0])
+
+
+def _pr_hit(n):
+    return Hit(id=f"github:pr:{n}", source="github", title=f"PR {n}", url="u", timestamp=datetime.now(TZ),
+               similarity=0.5, snippet="")
+
+
+def test_cite_mentioned_prs_points_at_the_right_source():
+    from agent.compose import cite_mentioned_prs
+    hits = [_pr_hit(1), _pr_hit(27947), _pr_hit(3), _pr_hit(4), _pr_hit(5), _pr_hit(26180)]
+    text = "Webhooks enqueue a job, introduced in PR #26180 [2]. See #99999 too."
+    assert cite_mentioned_prs(text, hits) == "Webhooks enqueue a job, introduced in PR #26180 [6] [2]. See #99999 too."
+    already = "Fixed in #26180 [6]."
+    assert cite_mentioned_prs(already, hits) == already
+
+
+def test_wrong_citation_flows_through_renumbering():
+    from agent.compose import cite_mentioned_prs
+    hits = [_pr_hit(1), _pr_hit(27947), _pr_hit(3), _pr_hit(4), _pr_hit(5), _pr_hit(26180)]
+    text, order = renumber_citations(cite_mentioned_prs("Introduced in #26180 [2].", hits), len(hits))
+    assert text == "Introduced in #26180 [1][2]." and order == [5, 1]

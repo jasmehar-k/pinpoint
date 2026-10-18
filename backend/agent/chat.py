@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 
 import llm
 from agent import actions
-from agent.compose import (SYSTEM, build_prompt, cite_top_sources, drop_unlisted_people, fallback_answer, fallback_dm,
+from agent.compose import (SYSTEM, build_prompt, cite_mentioned_prs, cite_top_sources, drop_unlisted_people, fallback_answer, fallback_dm,
                            intent, named_expert, parse_reply, pick_slot, renumber_citations,
                            routing_text, slot_label, slot_preference, tidy_dm)
 from graph.availability import get_availability
@@ -108,6 +108,7 @@ def _question(conn, convo: Conversation, question: str, now: datetime, client) -
     if reply:
         # The answer explains the code; who to ask is the routing sentence's job, so no names at all
         answer = drop_unlisted_people(reply["answer"], load_org().people, allowed=set())
+        answer = cite_mentioned_prs(answer, hits)
         answer, order = renumber_citations(answer, len(hits))
         if not answer:
             answer, order = fallback_answer(hits)
