@@ -107,7 +107,7 @@ Reply with only JSON: {"answer": "...", "dm": "..."}
 
 answer: 2 to 5 sentences answering the question from the sources, written like a friendly senior \
 teammate on Slack: plain words, short sentences, no filler ("Additionally", "It is important to \
-note"). Cite every claim with the source number in square brackets, like [1] or [2][3]. When you \
+note"). Every sentence must end with at least one source number in square brackets, like [1] or [2][3]; leave out anything you can't cite. When you \
 mention a PR number, cite the source that is that PR. PR sources are merged code changes and are \
 the most reliable; THREAD sources are team discussions. Base the answer on PRs where they cover the \
 question, and never name a class, function, file or event that isn't written in a source. If the \
@@ -199,6 +199,29 @@ def tidy_dm(text: str, recipient: Person) -> str:
     text = text.replace(recipient.name, recipient.name.split()[0])
     text = re.sub(r"\s*[\u2014\u2013]\s*", ", ", text)
     return re.sub(r",\s*,", ",", text).strip()
+
+
+_FULLWIDTH = re.compile(r"[\u3010\uff3b]\s*(\d+)\s*[\u3011\uff3d]")  # 【2】 ［2］
+_MODEL_SOURCES = re.compile(r"\s*\(?\b[Ss]ources?:[^)\n]*\)?\s*$", re.M)  # "(Sources: 12)"
+_TRAILING_MARKERS = re.compile(r"([.!?])\s*((?:\[\d+(?:\s*,\s*\d+)*\]\s*)+)")
+
+
+def normalize_markers(text: str) -> str:
+    """Bring the model's citation formats to plain [n] before anything else reads them:
+    fullwidth brackets, its own "(Sources: ...)" (code adds one when needed), and markers placed
+    after the period or on the next line ("ping.\n[1][2]" -> "ping [1][2].")."""
+    text = _FULLWIDTH.sub(r"[\1]", text)
+    text = _MODEL_SOURCES.sub("", text)
+    text = _TRAILING_MARKERS.sub(lambda m: f" {m.group(2).strip()}{m.group(1)} ", text)
+    return re.sub(r"[ \t]*\n+[ \t]*", " ", text).strip()
+
+
+def drop_uncited(text: str) -> str:
+    """Keep only sentences that cite a source. If nothing is cited at all, return the text as is;
+    the caller attaches the top sources instead (the model forgot to cite rather than made it up)."""
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+    cited = [s for s in sentences if _MARKER.search(s)]
+    return " ".join(cited) if cited else text
 
 
 def cite_top_sources(answer: str, n_sources: int, n: int = 2) -> tuple[str, list[int]]:

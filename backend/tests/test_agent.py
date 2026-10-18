@@ -168,3 +168,36 @@ def test_wrong_citation_flows_through_renumbering():
     hits = [_pr_hit(1), _pr_hit(27947), _pr_hit(3), _pr_hit(4), _pr_hit(5), _pr_hit(26180)]
     text, order = renumber_citations(cite_mentioned_prs("Introduced in #26180 [2].", hits), len(hits))
     assert text == "Introduced in #26180 [1][2]." and order == [5, 1]
+
+
+def test_drop_uncited_removes_unsourced_claims():
+    from agent.compose import drop_uncited
+    text = ("Webhooks enqueue a sync job right away [1]. Pings fold together through BullMQ dedup. "
+            "Failed syncs are retried 3x and then go to a dead-letter queue. The cron is the fallback [2].")
+    assert drop_uncited(text) == "Webhooks enqueue a sync job right away [1]. The cron is the fallback [2]."
+
+
+def test_drop_uncited_handles_markers_after_the_period():
+    from agent.compose import drop_uncited, normalize_markers
+    text = normalize_markers("Prices come from the pricing config.[1][2] Upgrades switch plan keys.[3] Some filler here.")
+    assert drop_uncited(text) == "Prices come from the pricing config [1][2]. Upgrades switch plan keys [3]."
+
+
+@pytest.mark.parametrize("raw,expected", [
+    # markers on the next line (the Q1 regression)
+    ("Sync starts with a webhook ping.\n[1][2]\nThe job pulls messages.\n[2]",
+     "Sync starts with a webhook ping [1][2]. The job pulls messages [2]."),
+    # fullwidth brackets and the model's own sources line (the billing answer)
+    ("Prices live in the pricing config\u30102\u3011. Upgrades switch plans \uff3b3\uff3d. (Sources: 12)",
+     "Prices live in the pricing config[2]. Upgrades switch plans [3]."),
+    ("Answer [1].\nSources: [1], [2]", "Answer [1]."),
+    ("Plain [1]. Already fine [2].", "Plain [1]. Already fine [2]."),
+])
+def test_normalize_markers(raw, expected):
+    from agent.compose import normalize_markers
+    assert normalize_markers(raw) == expected
+
+
+def test_drop_uncited_keeps_fully_uncited_answers_for_the_caller():
+    from agent.compose import drop_uncited
+    assert drop_uncited("Open a hotfix PR. Ping #deploys.") == "Open a hotfix PR. Ping #deploys."
