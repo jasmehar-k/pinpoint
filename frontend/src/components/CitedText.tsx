@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { Citation } from "@/lib/types";
 
 // Seeded threads link to /artifacts/{id} in this app; everything else is external.
+// Both open in a new tab: the chat lives in page state, so navigating away would lose it.
 export function isInternal(url: string): boolean {
   return url.startsWith("/");
 }
@@ -13,7 +14,7 @@ type LinkProps = { url: string; title: string; className?: string; children: Rea
 export function SourceLink({ url, title, className, children }: LinkProps) {
   if (isInternal(url)) {
     return (
-      <Link href={url} className={className} title={title}>
+      <Link href={url} target="_blank" className={className} title={title}>
         {children}
       </Link>
     );
