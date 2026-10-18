@@ -2,55 +2,55 @@
 
 import { useState } from "react";
 
-import { approveAction } from "@/lib/api";
 import { firstName, nameFromId } from "@/lib/people";
 import { dayKey, formatDay, formatSlot, weekdaysBetween } from "@/lib/time";
 import type { AvailabilityResponse, PendingAction, ScheduleMeetingPayload, Slot } from "@/lib/types";
 
+import { ActionButtons, CardShell } from "./ActionCard";
+import { useApproval } from "./useApproval";
+
 type MeetingAction = Extract<PendingAction, { kind: "schedule_meeting" }>;
 
-type State = { step: "draft"; error?: string } | { step: "booking" } | { step: "booked"; slot: Slot };
-
-const sameSlot = (a: Slot, b: Slot) => new Date(a.start).getTime() === new Date(b.start).getTime();
+const startOf = (s: Slot) => new Date(s.start).getTime();
+const sameSlot = (a: Slot, b: Slot) => startOf(a) === startOf(b);
 
 // Nothing is booked until Approve. Approve books the slot picked in the week view.
 export function MeetingApproveCard({ action, availability }: { action: MeetingAction; availability?: AvailabilityResponse | null }) {
   const { title, attendees, slot: suggested } = action.payload;
   const [selected, setSelected] = useState<Slot>(suggested);
-  const [state, setState] = useState<State>(action.status === "executed" ? { step: "booked", slot: suggested } : { step: "draft" });
+  const [taken, setTaken] = useState<number[]>([]); // slot starts the backend said were no longer free
 
   // Without availability, the suggested slot is the only option.
   const slots = availability?.mutual_free_slots.length ? availability.mutual_free_slots : [suggested];
   const days = availability ? weekdaysBetween(availability.window_start, availability.window_end) : [suggested.start];
+
+  const { state, approve, dismiss } = useApproval(action, (failed) => {
+    if (failed.kind !== "schedule_meeting") return;
+    // Mark the slot that failed and move the pick to the next free one, so a retry is one click.
+    const bad = startOf(failed.payload.slot);
+    const nowTaken = [...taken, bad];
+    setTaken(nowTaken);
+    const next = slots.find((s) => startOf(s) > bad && !nowTaken.includes(startOf(s))) ?? slots.find((s) => !nowTaken.includes(startOf(s)));
+    if (next) setSelected(next);
+  });
+
   const changed = !sameSlot(selected, suggested);
+  const selectedTaken = taken.includes(startOf(selected));
   const names = attendees.map(firstName);
 
-  async function approve() {
-    if (state.step !== "draft") return;
-    setState({ step: "booking" }); // locks the card before the request goes out
+  function onApprove() {
     // Only send a payload when a different slot was picked; no payload books the suggestion.
     const payload: ScheduleMeetingPayload | undefined = changed ? { title, attendees, slot: selected } : undefined;
-    try {
-      const result = await approveAction(action, { payload });
-      if (result.status === "executed") {
-        setState({ step: "booked", slot: selected });
-      } else {
-        const reason = typeof result.result?.error === "string" ? result.result.error : `status ${result.status}`;
-        setState({ step: "draft", error: `Not booked: ${reason}` });
-      }
-    } catch (e) {
-      setState({ step: "draft", error: `Not booked: ${e instanceof Error ? e.message : String(e)}` });
-    }
+    approve({ payload });
   }
 
-  const locked = state.step !== "draft";
-
   return (
-    <article aria-label={`Meeting: ${title}`} className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
-      <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h4 className="font-semibold">{title}</h4>
-        <span className="text-xs text-zinc-500">30 min · times in Pacific</span>
-      </header>
+    <CardShell
+      label={`Meeting: ${title}`}
+      title={title}
+      aside="30 min · times in Pacific"
+      dismissed={state.phase === "dismissed" ? "Dismissed. No meeting was booked." : null}
+    >
       <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
         {attendees.map(nameFromId).join(" and ")}
         {availability && (
@@ -61,31 +61,26 @@ export function MeetingApproveCard({ action, availability }: { action: MeetingAc
         )}
       </p>
 
-      {state.step === "booked" ? (
+      {state.phase === "done" ? (
         <p role="status" className="mt-3 text-sm font-medium text-emerald-700 dark:text-emerald-400">
-          ✓ Booked {formatDay(state.slot.start)}, {formatSlot(state.slot)}. Added to {names.map((n) => `${n}'s`).join(" and ")} calendars.
+          ✓ Booked {formatDay(selected.start)}, {formatSlot(selected)}. Added to {names.map((n) => `${n}'s`).join(" and ")} calendars.
         </p>
       ) : (
         <>
-          <WeekView days={days} slots={slots} selected={selected} onSelect={setSelected} disabled={locked} />
-          <footer className="mt-3 flex flex-wrap items-center gap-3">
-            <button
-              onClick={approve}
-              disabled={locked}
-              className="h-10 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-zinc-300 dark:disabled:bg-zinc-700"
-            >
-              {state.step === "booking" ? "Booking…" : `Book ${formatDay(selected.start).split(",")[0]} ${formatSlot(selected)}`}
-            </button>
-            {state.step === "draft" && changed && <span className="text-xs text-zinc-500">Changed from the suggested time</span>}
-            {state.step === "draft" && state.error && (
-              <span role="alert" className="text-sm text-red-700 dark:text-red-300">
-                {state.error}
-              </span>
-            )}
-          </footer>
+          <WeekView days={days} slots={slots} taken={taken} selected={selected} onSelect={setSelected} disabled={state.phase !== "draft"} />
+          <ActionButtons
+            state={state}
+            approveLabel={`Book ${formatDay(selected.start).split(",")[0]} ${formatSlot(selected)}`}
+            workingLabel="Booking…"
+            disabled={selectedTaken}
+            note={changed ? "Changed from the suggested time" : undefined}
+            errorPrefix="Not booked"
+            onApprove={onApprove}
+            onDismiss={dismiss}
+          />
         </>
       )}
-    </article>
+    </CardShell>
   );
 }
 
@@ -93,12 +88,14 @@ export function MeetingApproveCard({ action, availability }: { action: MeetingAc
 function WeekView({
   days,
   slots,
+  taken,
   selected,
   onSelect,
   disabled,
 }: {
   days: string[];
   slots: Slot[];
+  taken: number[];
   selected: Slot;
   onSelect: (s: Slot) => void;
   disabled: boolean;
@@ -116,20 +113,25 @@ function WeekView({
             <div className="flex flex-1 flex-wrap gap-1.5 sm:flex-col">
               {daySlots.length === 0 && <span className="py-1.5 text-xs text-zinc-400 sm:text-center">No shared time</span>}
               {daySlots.map((s) => {
-                const isSelected = sameSlot(s, selected);
+                const isTaken = taken.includes(startOf(s));
+                const isSelected = !isTaken && sameSlot(s, selected);
                 return (
                   <button
                     key={s.start}
                     onClick={() => onSelect(s)}
-                    disabled={disabled}
+                    disabled={disabled || isTaken}
                     aria-pressed={isSelected}
-                    className={`rounded-md border px-2 py-1.5 text-xs font-medium whitespace-nowrap disabled:cursor-not-allowed ${
-                      isSelected
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-zinc-300 text-zinc-700 hover:border-blue-400 hover:bg-blue-50 disabled:hover:bg-transparent dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    title={isTaken ? "No longer free" : undefined}
+                    className={`relative rounded-md border px-2 py-1.5 text-xs font-medium whitespace-nowrap disabled:cursor-not-allowed ${
+                      isTaken
+                        ? "border-zinc-200 text-zinc-400 line-through dark:border-zinc-800"
+                        : isSelected
+                          ? "border-blue-600 bg-blue-600 text-white"
+                          : "border-zinc-300 text-zinc-700 hover:border-blue-400 hover:bg-blue-50 disabled:hover:bg-transparent dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
                     }`}
                   >
                     {formatSlot(s)}
+                    {isTaken && <span className="sr-only"> (taken)</span>}
                   </button>
                 );
               })}
