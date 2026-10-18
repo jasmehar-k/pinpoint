@@ -1,0 +1,164 @@
+"""Shared models: the normalized Event every connector emits, identity, and API responses.
+
+API response models are the contract for /fixtures. tests/test_fixtures.py keeps them in sync.
+"""
+
+from datetime import date, datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+Source = Literal["slack", "github", "seed"]
+EventType = Literal["authored", "reviewed", "answered", "asked", "owns"]
+
+EVENT_WEIGHTS: dict[str, float] = {
+    "owns": 1.5,
+    "authored": 1.0,
+    "answered": 0.8,
+    "reviewed": 0.7,
+    "asked": 0.1,
+}
+
+
+class Event(BaseModel):
+    source: Source
+    type: EventType
+    person_id: str
+    artifact_id: str
+    text: str
+    paths: list[str] = Field(default_factory=list)
+    timestamp: datetime
+    url: str
+    title: str | None = None
+
+
+class Person(BaseModel):
+    id: str
+    name: str
+    team: str
+    role: str
+    manager: str | None
+    github_login: str | None
+    slack_handle: str
+    # Set only for personas backed by a real Slack user. Null means sends are simulated.
+    slack_user_id: str | None = None
+
+
+class Org(BaseModel):
+    teams: list[str]
+    people: list[Person]
+
+
+class Meeting(BaseModel):
+    id: str
+    title: str
+    attendees: list[str]
+    start: datetime
+    end: datetime
+    recurring: bool = False
+
+
+# ---- API responses ----
+
+class Health(BaseModel):
+    status: Literal["ok"]
+    mode: Literal["seeded", "live"]
+    db: bool
+
+
+class Citation(BaseModel):
+    id: str
+    title: str
+    url: str
+    source: Source
+
+
+class Evidence(BaseModel):
+    type: EventType
+    title: str
+    url: str
+    timestamp: datetime
+
+
+class Availability(BaseModel):
+    person_id: str
+    booked_pct: float = Field(ge=0, le=1)
+    open_reviews: int = Field(ge=0)
+    factor: float = Field(ge=0, le=1)
+
+
+class Expert(BaseModel):
+    person_id: str
+    name: str
+    team: str
+    role: str
+    topic: str
+    expertise: float
+    rank_score: float
+    evidence_summary: str
+    evidence: list[Evidence] = Field(max_length=3)
+    availability: Availability | None = None
+    badge: Literal["recommended", "busy"] | None = None
+    same_team: bool = False
+
+
+class ExpertsResponse(BaseModel):
+    query: str
+    experts: list[Expert]
+
+
+class Slot(BaseModel):
+    start: datetime
+    end: datetime
+
+
+class AvailabilityResponse(BaseModel):
+    window_start: datetime
+    window_end: datetime
+    people: list[Availability]
+    mutual_free_slots: list[Slot]
+
+
+class SendMessagePayload(BaseModel):
+    to: str
+    text: str
+
+
+class ScheduleMeetingPayload(BaseModel):
+    title: str
+    attendees: list[str]
+    slot: Slot
+
+
+ActionStatus = Literal["pending", "executed", "rejected", "failed"]
+
+
+class PendingAction(BaseModel):
+    id: str
+    kind: Literal["send_message", "schedule_meeting"]
+    status: ActionStatus
+    requested_by: str
+    payload: SendMessagePayload | ScheduleMeetingPayload
+    created_at: datetime
+    executed_at: datetime | None = None
+    # e.g. {"delivery": "slack"} or {"delivery": "simulated"}, or the meeting id
+    result: dict | None = None
+
+
+class ChatReply(BaseModel):
+    text: str
+    citations: list[Citation]
+
+
+class ChatResponse(BaseModel):
+    conversation_id: str
+    reply: ChatReply
+    experts: list[Expert] = Field(default_factory=list)
+    pending_actions: list[PendingAction] = Field(default_factory=list)
+    availability: AvailabilityResponse | None = None
+
+
+class UserProfile(BaseModel):
+    person_id: str
+    started_on: date
+    interests: list[str] = Field(default_factory=list)

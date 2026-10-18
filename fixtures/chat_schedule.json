@@ -1,0 +1,37 @@
+{
+  "conversation_id": "conv-demo-1",
+  "reply": {
+    "text": "You and Marcus are both free Wednesday at 10:30 AM. I've drafted a 30-minute invite. Approve it and I'll add it to both calendars.",
+    "citations": []
+  },
+  "experts": [],
+  "availability": {
+    "window_start": "2026-10-19T09:00:00-07:00",
+    "window_end": "2026-10-23T17:00:00-07:00",
+    "people": [
+      {"person_id": "priya-shah", "booked_pct": 0.22, "open_reviews": 0, "factor": 0.78},
+      {"person_id": "marcus-lee", "booked_pct": 0.35, "open_reviews": 2, "factor": 0.585}
+    ],
+    "mutual_free_slots": [
+      {"start": "2026-10-20T14:00:00-07:00", "end": "2026-10-20T14:30:00-07:00"},
+      {"start": "2026-10-21T10:30:00-07:00", "end": "2026-10-21T11:00:00-07:00"},
+      {"start": "2026-10-21T15:00:00-07:00", "end": "2026-10-21T15:30:00-07:00"},
+      {"start": "2026-10-22T11:00:00-07:00", "end": "2026-10-22T11:30:00-07:00"},
+      {"start": "2026-10-23T13:30:00-07:00", "end": "2026-10-23T14:00:00-07:00"}
+    ]
+  },
+  "pending_actions": [
+    {
+      "id": "act-0002",
+      "kind": "schedule_meeting",
+      "status": "pending",
+      "requested_by": "priya-shah",
+      "payload": {
+        "title": "Inbound email sync walkthrough (Priya / Marcus)",
+        "attendees": ["priya-shah", "marcus-lee"],
+        "slot": {"start": "2026-10-21T10:30:00-07:00", "end": "2026-10-21T11:00:00-07:00"}
+      },
+      "created_at": "2026-10-19T09:16:00-07:00"
+    }
+  ]
+}

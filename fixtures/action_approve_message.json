@@ -1,0 +1,13 @@
+{
+  "id": "act-0001",
+  "kind": "send_message",
+  "status": "executed",
+  "requested_by": "priya-shah",
+  "payload": {
+    "to": "marcus-lee",
+    "text": "Hi Marcus, I'm Priya, I just joined Integrations. I'm getting up to speed on inbound email sync and saw you reviewed the webhook and cron sync changes (#26180, #26181). Would you have 30 minutes this week to walk me through how a channel sync gets triggered and where it usually breaks? Thanks!"
+  },
+  "created_at": "2026-10-19T09:14:00-07:00",
+  "executed_at": "2026-10-19T09:15:02-07:00",
+  "result": {"delivery": "slack", "channel": "D0DEMO123", "ts": "1792426502.000100"}
+}

@@ -1,0 +1,59 @@
+{
+  "query": "inbound email sync",
+  "experts": [
+    {
+      "person_id": "marcus-lee",
+      "name": "Marcus Lee",
+      "team": "Integrations",
+      "role": "Staff Engineer",
+      "topic": "messaging",
+      "expertise": 5.4,
+      "rank_score": 3.16,
+      "evidence_summary": "Reviewed 12 of Dana's sync PRs, authored 26 PRs in Messaging, active 2 days ago",
+      "evidence": [
+        {"type": "reviewed", "title": "Sync message channels from webhooks without the cron hand-off (#26180)", "url": "https://github.com/twentyhq/twenty/pull/26180", "timestamp": "2026-08-04T14:12:00Z"},
+        {"type": "reviewed", "title": "Load sync cron channels with one query per tick (#26181)", "url": "https://github.com/twentyhq/twenty/pull/26181", "timestamp": "2026-08-04T16:40:00Z"},
+        {"type": "authored", "title": "Keep only the writes inside the calendar and messaging import transactions (#24681)", "url": "https://github.com/twentyhq/twenty/pull/24681", "timestamp": "2026-06-23T09:05:00Z"}
+      ],
+      "availability": {"person_id": "marcus-lee", "booked_pct": 0.35, "open_reviews": 2, "factor": 0.585},
+      "badge": "recommended",
+      "same_team": true
+    },
+    {
+      "person_id": "dana-okafor",
+      "name": "Dana Okafor",
+      "team": "Integrations",
+      "role": "Senior Engineer",
+      "topic": "messaging",
+      "expertise": 9.8,
+      "rank_score": 1.51,
+      "evidence_summary": "Authored 125 PRs in Messaging, answered 14 questions, active 1 day ago",
+      "evidence": [
+        {"type": "authored", "title": "Stop duplicating Gmail sent emails when sync fetches them again (#27688)", "url": "https://github.com/twentyhq/twenty/pull/27688", "timestamp": "2026-10-09T11:20:00Z"},
+        {"type": "authored", "title": "Sync message channels from webhooks without the cron hand-off (#26180)", "url": "https://github.com/twentyhq/twenty/pull/26180", "timestamp": "2026-08-04T14:12:00Z"},
+        {"type": "answered", "title": "#help: how does inbound Gmail sync get triggered?", "url": "/artifacts/seed-thread-0042", "timestamp": "2026-10-01T17:03:00Z"}
+      ],
+      "availability": {"person_id": "dana-okafor", "booked_pct": 0.78, "open_reviews": 6, "factor": 0.154},
+      "badge": "busy",
+      "same_team": true
+    },
+    {
+      "person_id": "victor-hale",
+      "name": "Victor Hale",
+      "team": "Core",
+      "role": "Head of Engineering",
+      "topic": "messaging",
+      "expertise": 6.1,
+      "rank_score": 0.5,
+      "evidence_summary": "Authored 35 PRs in Messaging, reviewed 13 of Dana's sync PRs, active today",
+      "evidence": [
+        {"type": "reviewed", "title": "Skip missing Microsoft messages instead of resetting the mailbox sync (#26107)", "url": "https://github.com/twentyhq/twenty/pull/26107", "timestamp": "2026-07-30T08:45:00Z"},
+        {"type": "reviewed", "title": "Stop duplicating Gmail sent emails when sync fetches them again (#27688)", "url": "https://github.com/twentyhq/twenty/pull/27688", "timestamp": "2026-10-09T11:20:00Z"},
+        {"type": "reviewed", "title": "Show import progress on connected accounts (#27491)", "url": "https://github.com/twentyhq/twenty/pull/27491", "timestamp": "2026-09-28T13:30:00Z"}
+      ],
+      "availability": {"person_id": "victor-hale", "booked_pct": 0.85, "open_reviews": 9, "factor": 0.083},
+      "badge": "busy",
+      "same_team": false
+    }
+  ]
+}

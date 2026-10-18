@@ -1,0 +1,14 @@
+{
+  "id": "act-0002",
+  "kind": "schedule_meeting",
+  "status": "executed",
+  "requested_by": "priya-shah",
+  "payload": {
+    "title": "Inbound email sync walkthrough (Priya / Marcus)",
+    "attendees": ["priya-shah", "marcus-lee"],
+    "slot": {"start": "2026-10-21T10:30:00-07:00", "end": "2026-10-21T11:00:00-07:00"}
+  },
+  "created_at": "2026-10-19T09:16:00-07:00",
+  "executed_at": "2026-10-19T09:16:40-07:00",
+  "result": {"meeting_id": "mtg-pinpoint-0001"}
+}

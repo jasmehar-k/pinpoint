@@ -218,3 +218,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Pinpoint
+node_modules/
+.next/
+.env.local
+.env*.local
+next-env.d.ts
+*.tsbuildinfo
+.vercel
