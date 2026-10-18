@@ -1,5 +1,5 @@
 from schema import Person
-from connectors.github import normalize_pr
+from connectors.github import clean_body, normalize_pr
 
 
 def _person(id_, login):
@@ -68,3 +68,12 @@ def test_skips_prs_outside_ingested_packages():
 def test_null_body():
     artifact, _ = normalize_pr(_pr(body=None), PEOPLE)
     assert artifact.text == "Sync message channels from webhooks"
+
+
+def test_clean_body_strips_template_noise():
+    body = (
+        "## Summary\n<!-- describe your change -->\nFixes sync.\n\n\n\n"
+        '<img width="400" src="https://x/y.png" />\n![screenshot](https://x/z.png)\n'
+        "<details><summary>Logs</summary>trace</details>"
+    )
+    assert clean_body(body) == "## Summary\n\nFixes sync.\n\nLogstrace"

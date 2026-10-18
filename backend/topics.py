@@ -21,6 +21,8 @@ TOPICS: dict[str, str] = {
 
 _S = "packages/twenty-server/src/"
 _CORE = _S + "engine/core-modules/"
+# Frontend code for a feature counts toward that feature; the rest falls through to "frontend".
+_F = "packages/twenty-front/src/modules/"
 
 PATH_RULES: list[tuple[str, list[str]]] = [
     ("messaging", [
@@ -31,13 +33,26 @@ PATH_RULES: list[tuple[str, list[str]]] = [
         _S + "modules/match-participant",
         _S + "modules/emailing",
         _CORE + "imap-smtp-caldav-connection",
+        _F + "accounts",
+        _F + "settings/accounts",
     ]),
     ("calendar", [_S + "modules/calendar", _CORE + "calendar"]),
-    ("workflow", [_S + "modules/workflow", _CORE + "workflow"]),
-    ("billing", [_CORE + "billing"]),
-    ("auth", [_CORE + "auth", _CORE + "sso", _CORE + "two-factor-authentication", _CORE + "jwt"]),
-    ("metadata", [_S + "engine/metadata-modules", _S + "engine/workspace-manager"]),
-    ("file-storage", [_CORE + "file-storage", _CORE + "file"]),
+    ("workflow", [_S + "modules/workflow", _CORE + "workflow", _F + "workflow"]),
+    ("billing", [_CORE + "billing", _F + "settings/billing"]),
+    ("auth", [
+        _CORE + "auth", _CORE + "sso", _CORE + "two-factor-authentication", _CORE + "jwt",
+        _F + "auth", _F + "settings/security", _F + "settings/two-factor-authentication",
+    ]),
+    ("metadata", [
+        _S + "engine/metadata-modules",
+        _S + "engine/workspace-manager",
+        _S + "database/commands",  # upgrade commands are mostly workspace schema migrations
+        "packages/twenty-server/test/integration/metadata",
+        _F + "object-metadata",
+        _F + "metadata-store",
+        _F + "settings/data-model",
+    ]),
+    ("file-storage", [_CORE + "file-storage", _CORE + "file", _F + "file-upload", _F + "file"]),
     ("message-queue", [_CORE + "message-queue", _CORE + "cron"]),
     ("frontend", ["packages/twenty-front"]),
 ]

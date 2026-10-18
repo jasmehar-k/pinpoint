@@ -106,28 +106,32 @@ Workflow, Messaging (email sync), Calendar sync, Billing, Auth, Metadata (custom
 
 Map files to topics by path. For Slack threads, the LLM tags 1 to 3 topics per thread from this fixed list (or "other"). Batch ~25 threads per call, and generate seed threads ~10 per call: free OpenRouter models are rate-limited per minute and per day. Do not use clustering to discover topics.
 
-Path map, checked against the repo (prefixes under `packages/twenty-server/src/`, first match wins):
+Path map, checked against the repo. Source of truth is `backend/topics.py`; first match wins. Server prefixes are under `packages/twenty-server/src/`, frontend (`front:`) under `packages/twenty-front/src/modules/`:
 
 | Topic | Prefixes |
 | --- | --- |
-| Messaging | `modules/messaging`, `engine/core-modules/messaging`, `modules/connected-account`, `modules/blocklist`, `modules/match-participant`, `modules/emailing`, `engine/core-modules/imap-smtp-caldav-connection` |
+| Messaging | `modules/messaging`, `engine/core-modules/messaging`, `modules/connected-account`, `modules/blocklist`, `modules/match-participant`, `modules/emailing`, `engine/core-modules/imap-smtp-caldav-connection`, front: `accounts`, `settings/accounts` |
 | Calendar sync | `modules/calendar`, `engine/core-modules/calendar` |
-| Workflow | `modules/workflow`, `engine/core-modules/workflow` |
-| Billing | `engine/core-modules/billing` |
-| Auth | `engine/core-modules/{auth,sso,two-factor-authentication,jwt}` |
-| Metadata | `engine/metadata-modules`, `engine/workspace-manager` |
-| File storage | `engine/core-modules/{file-storage,file}` |
+| Workflow | `modules/workflow`, `engine/core-modules/workflow`, front: `workflow` |
+| Billing | `engine/core-modules/billing`, front: `settings/billing` |
+| Auth | `engine/core-modules/{auth,sso,two-factor-authentication,jwt}`, front: `auth`, `settings/{security,two-factor-authentication}` |
+| Metadata | `engine/metadata-modules`, `engine/workspace-manager`, `database/commands` (upgrade migrations), `test/integration/metadata`, front: `object-metadata`, `metadata-store`, `settings/data-model` |
+| File storage | `engine/core-modules/{file-storage,file}`, front: `file-upload`, `file` |
 | Message queue / jobs | `engine/core-modules/{message-queue,cron}` |
-| Frontend | `packages/twenty-front/` |
+| Frontend | everything else in `packages/twenty-front/` |
 
-Deploys and On-call have no code paths. Their experts come from Slack only. About 20% of commits match no prefix (shared utils); they still get embedded but add to no topic score.
+Feature folders in the frontend count toward the feature, so UI work on, say, the data model settings makes you a Metadata expert. Deploys and On-call have no code paths. Their experts come from Slack only. About 16% of PRs match no prefix (shared utils); they still get embedded but add to no topic score.
+
+Search quality is guarded by `tests/test_demo.py` (`uv run pytest -m demo`, real DB). Rerun it after changing the path map, the embedding text or the embedding model.
 
 ## Demo data decisions
 
 Grounded in the last 6 months of Twenty history (3,853 squash-merged PRs, all titled `... (#N)`, so commit author = PR author):
 
-- **Dana Okafor = `neo773`**: authored 123 of 240 ingested Messaging PRs, by far the top author.
-- **Marcus Lee = `charlesBochet`**: reviewed 37 of Dana's 123 Messaging PRs (Victor reviewed 38; nobody else more than 14), authored 20 Messaging PRs himself. Seed him at ~35% booked. Evidence line says "reviewed 37 of Dana's Messaging PRs", not "most".
+Counts shift a little whenever the path map changes; these are from the current map.
+
+- **Dana Okafor = `neo773`**: authored 128 of 292 Messaging PRs, by far the top author.
+- **Marcus Lee = `charlesBochet`**: reviewed 38 of Dana's Messaging PRs (Victor reviewed 41; nobody else more than 14). Seed him at ~35% booked. Evidence lines come from real counts, never "most".
 - **`FelixMalfait` (founder) = a senior lead persona booked ~85%**. He scores #2 on Messaging and tops most other topics, so he must be busy or he swamps every recommendation. Demo line: top two experts are swamped, Marcus has time.
 - Exclude `CoreTeamTwenty` (shared account) and bots from people and scoring.
 - **Marcus's `slack_handle` maps to a real teammate**, so the approved DM really arrives. Sends to other fake personas are simulated: the action is marked sent and nothing reaches Slack.

@@ -21,3 +21,5 @@ dev = [
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+markers = ["demo: golden demo tests against the real DB (run with -m demo)"]
+addopts = "-m 'not demo'"

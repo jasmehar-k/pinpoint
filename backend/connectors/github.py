@@ -6,6 +6,7 @@ so reruns are free. normalize_pr() is pure and does the mapping.
 
 import json
 import os
+import re
 import time
 from collections.abc import Iterator
 from datetime import date, datetime, timedelta
@@ -103,6 +104,21 @@ def fetch(since: date, until: date, refresh: bool = False) -> Iterator[dict]:
         start = end + timedelta(days=1)
 
 
+_NOISE = [
+    re.compile(r"<!--.*?-->", re.S),             # template comments
+    re.compile(r"<img[^>]*>", re.I),             # html images
+    re.compile(r"!\[[^\]]*\]\([^)]*\)"),         # markdown images
+    re.compile(r"</?(details|summary|p|br|div)[^>]*>", re.I),
+]
+
+
+def clean_body(body: str) -> str:
+    for pattern in _NOISE:
+        body = pattern.sub("", body)
+    body = re.sub(r"[ \t]+\n", "\n", body)
+    return re.sub(r"\n{3,}", "\n\n", body).strip()
+
+
 def _parse_ts(s: str) -> datetime:
     return datetime.fromisoformat(s.replace("Z", "+00:00"))
 
@@ -116,7 +132,7 @@ def normalize_pr(pr: dict, people: dict | None = None) -> tuple[Artifact | None,
         return None, []
 
     artifact_id = f"github:pr:{pr['number']}"
-    body = (pr.get("body") or "").strip()[:BODY_CHARS]
+    body = clean_body(pr.get("body") or "")[:BODY_CHARS]
     text = f"{pr['title']}\n\n{body}".strip()
     merged_at = _parse_ts(pr["mergedAt"])
     artifact = Artifact(

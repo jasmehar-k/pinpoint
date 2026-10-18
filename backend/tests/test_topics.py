@@ -15,6 +15,11 @@ S = "packages/twenty-server/src/"
     (S + "engine/metadata-modules/field-metadata/x.ts", "metadata"),
     (S + "engine/core-modules/cron/x.ts", "message-queue"),
     ("packages/twenty-front/src/modules/ui/Button.tsx", "frontend"),
+    ("packages/twenty-front/src/modules/settings/data-model/x.tsx", "metadata"),
+    ("packages/twenty-front/src/modules/workflow/x.tsx", "workflow"),
+    ("packages/twenty-front/src/modules/settings/accounts/x.tsx", "messaging"),
+    ("packages/twenty-front/src/modules/settings/members/x.tsx", "frontend"),
+    (S + "database/commands/upgrade-version-command/x.ts", "metadata"),
 ])
 def test_known_paths(path, topic):
     assert topic_for_path(path) == topic
