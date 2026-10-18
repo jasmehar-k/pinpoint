@@ -7,6 +7,7 @@ import { DEMO_USER, SUGGESTED_QUESTIONS } from "@/lib/demo";
 import type { ChatResponse } from "@/lib/types";
 
 import { CitedText, SourceList } from "./CitedText";
+import { ExpertList } from "./ExpertCard";
 
 type Message =
   | { id: number; role: "user"; text: string }
@@ -119,11 +120,14 @@ function MessageView({ message, onRetry }: { message: Message; onRetry: (q: stri
       </div>
     );
   }
-  const { reply } = message.response;
+  const { reply, experts = [] } = message.response;
   return (
-    <div className="max-w-full rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-4 py-3 text-[15px] leading-relaxed dark:border-zinc-800 dark:bg-zinc-900">
-      <CitedText text={reply.text} citations={reply.citations} />
-      <SourceList citations={reply.citations} />
+    <div className="flex flex-col gap-3">
+      <div className="max-w-full rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-4 py-3 text-[15px] leading-relaxed dark:border-zinc-800 dark:bg-zinc-900">
+        <CitedText text={reply.text} citations={reply.citations} />
+        <SourceList citations={reply.citations} />
+      </div>
+      <ExpertList experts={experts} />
     </div>
   );
 }
