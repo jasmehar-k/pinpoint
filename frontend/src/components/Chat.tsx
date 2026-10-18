@@ -10,6 +10,7 @@ import type { ChatResponse, Expert } from "@/lib/types";
 import { CitedText, SourceChips } from "./CitedText";
 import { DmApproveCard } from "./DmApproveCard";
 import { ExpertList } from "./ExpertCard";
+import { useGraphFocus } from "./graphFocus";
 import { MeetingApproveCard } from "./MeetingApproveCard";
 
 type Message =
@@ -28,6 +29,7 @@ export function Chat() {
   const nextId = useRef(0);
   const bottom = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { setTopic } = useGraphFocus();
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -49,6 +51,8 @@ export function Chat() {
       const response = await sendChat({ message: question, conversation_id: conversationId, user: DEMO_USER.id });
       setConversationId(response.conversation_id);
       add({ role: "assistant", response });
+      // A new answer focuses its topic in the graph.
+      if (response.experts[0]?.topic) setTopic(response.experts[0].topic);
     } catch (e) {
       add({ role: "error", text: e instanceof Error ? e.message : String(e), retry: question });
     } finally {
