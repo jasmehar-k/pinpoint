@@ -117,3 +117,9 @@ create table if not exists slack_replies (
     created_at  timestamptz not null default now(),
     primary key (channel_id, message_ts)
 );
+
+-- Last time each source was ingested; /health reports the latest as synced_at
+create table if not exists sync_log (
+    source    text primary key,
+    synced_at timestamptz not null default now()
+);

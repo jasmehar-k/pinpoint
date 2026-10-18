@@ -129,3 +129,12 @@ def test_relevant_keeps_hits_near_the_best():
     hits = [_hit("a", 0.82), _hit("b", 0.75), _hit("c", 0.72), _hit("d", 0.70)]
     assert [h.id for h in relevant(hits)] == ["a", "b", "c"]
     assert relevant([]) == []
+
+
+def test_bus_factor():
+    from graph.view import bus_factor
+    assert bus_factor([("dana", 96), ("victor", 51), ("marcus", 42)]) == (["dana"], "victor")
+    assert bus_factor([("ben", 6.7), ("jordan", 4.4), ("sam", 2.5)]) == (["ben", "jordan"], "sam")
+    assert bus_factor([("a", 10), ("b", 9), ("c", 8)]) == (["a", "b", "c"], None)
+    assert bus_factor([("a", 0.5)]) == ([], "a")  # nobody above the minimum score
+    assert bus_factor([]) == ([], None)

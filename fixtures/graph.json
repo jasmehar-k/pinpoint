@@ -1,0 +1,667 @@
+{
+  "threshold": 0.6,
+  "topics": [
+    {
+      "id": "workflow",
+      "name": "Workflow",
+      "experts": [
+        "elena-petrova",
+        "victor-hale"
+      ],
+      "bus_factor": 2,
+      "next_closest": "lena-fischer"
+    },
+    {
+      "id": "messaging",
+      "name": "Messaging (email sync)",
+      "experts": [
+        "dana-okafor"
+      ],
+      "bus_factor": 1,
+      "next_closest": "victor-hale"
+    },
+    {
+      "id": "calendar",
+      "name": "Calendar sync",
+      "experts": [
+        "dana-okafor",
+        "marcus-lee",
+        "victor-hale"
+      ],
+      "bus_factor": 3,
+      "next_closest": "ken-watanabe"
+    },
+    {
+      "id": "billing",
+      "name": "Billing",
+      "experts": [
+        "isabel-moreno"
+      ],
+      "bus_factor": 1,
+      "next_closest": "lena-fischer"
+    },
+    {
+      "id": "auth",
+      "name": "Auth",
+      "experts": [
+        "victor-hale",
+        "ravi-menon",
+        "marcus-lee",
+        "lena-fischer"
+      ],
+      "bus_factor": 4,
+      "next_closest": "ken-watanabe"
+    },
+    {
+      "id": "metadata",
+      "name": "Metadata (custom objects)",
+      "experts": [
+        "victor-hale"
+      ],
+      "bus_factor": 1,
+      "next_closest": "lena-fischer"
+    },
+    {
+      "id": "file-storage",
+      "name": "File storage",
+      "experts": [
+        "omar-haddad",
+        "lena-fischer",
+        "ken-watanabe",
+        "victor-hale"
+      ],
+      "bus_factor": 4,
+      "next_closest": "isabel-moreno"
+    },
+    {
+      "id": "message-queue",
+      "name": "Message queue / jobs",
+      "experts": [
+        "omar-haddad",
+        "victor-hale",
+        "lena-fischer"
+      ],
+      "bus_factor": 3,
+      "next_closest": "marcus-lee"
+    },
+    {
+      "id": "frontend",
+      "name": "Frontend",
+      "experts": [
+        "victor-hale"
+      ],
+      "bus_factor": 1,
+      "next_closest": "ravi-menon"
+    },
+    {
+      "id": "deploys",
+      "name": "Deploys",
+      "experts": [
+        "ben-carter",
+        "jordan-blake"
+      ],
+      "bus_factor": 2,
+      "next_closest": "sam-patel"
+    },
+    {
+      "id": "on-call",
+      "name": "On-call",
+      "experts": [
+        "sam-patel",
+        "daniel-novak"
+      ],
+      "bus_factor": 2,
+      "next_closest": "jordan-blake"
+    }
+  ],
+  "people": [
+    {
+      "person_id": "victor-hale",
+      "name": "Victor Hale",
+      "team": "Core",
+      "booked_pct": 0.844
+    },
+    {
+      "person_id": "isabel-moreno",
+      "name": "Isabel Moreno",
+      "team": "Core",
+      "booked_pct": 0.338
+    },
+    {
+      "person_id": "jordan-blake",
+      "name": "Jordan Blake",
+      "team": "Core",
+      "booked_pct": 0.5
+    },
+    {
+      "person_id": "sam-patel",
+      "name": "Sam Patel",
+      "team": "Core",
+      "booked_pct": 0.325
+    },
+    {
+      "person_id": "ben-carter",
+      "name": "Ben Carter",
+      "team": "Core",
+      "booked_pct": 0.463
+    },
+    {
+      "person_id": "rachel-kim",
+      "name": "Rachel Kim",
+      "team": "Integrations",
+      "booked_pct": 0.4
+    },
+    {
+      "person_id": "dana-okafor",
+      "name": "Dana Okafor",
+      "team": "Integrations",
+      "booked_pct": 0.781
+    },
+    {
+      "person_id": "marcus-lee",
+      "name": "Marcus Lee",
+      "team": "Integrations",
+      "booked_pct": 0.35
+    },
+    {
+      "person_id": "tomas-rivera",
+      "name": "Tom\u00e1s Rivera",
+      "team": "Integrations",
+      "booked_pct": 0.306
+    },
+    {
+      "person_id": "aisha-bello",
+      "name": "Aisha Bello",
+      "team": "Integrations",
+      "booked_pct": 0.438
+    },
+    {
+      "person_id": "priya-shah",
+      "name": "Priya Shah",
+      "team": "Integrations",
+      "booked_pct": 0.212
+    },
+    {
+      "person_id": "daniel-novak",
+      "name": "Daniel Novak",
+      "team": "Platform",
+      "booked_pct": 0.338
+    },
+    {
+      "person_id": "lena-fischer",
+      "name": "Lena Fischer",
+      "team": "Platform",
+      "booked_pct": 0.719
+    },
+    {
+      "person_id": "ken-watanabe",
+      "name": "Ken Watanabe",
+      "team": "Platform",
+      "booked_pct": 0.556
+    },
+    {
+      "person_id": "omar-haddad",
+      "name": "Omar Haddad",
+      "team": "Platform",
+      "booked_pct": 0.344
+    },
+    {
+      "person_id": "grace-liu",
+      "name": "Grace Liu",
+      "team": "Platform",
+      "booked_pct": 0.356
+    },
+    {
+      "person_id": "zoe-adams",
+      "name": "Zoe Adams",
+      "team": "Platform",
+      "booked_pct": 0.494
+    },
+    {
+      "person_id": "mia-johansson",
+      "name": "Mia Johansson",
+      "team": "Product",
+      "booked_pct": 0.575
+    },
+    {
+      "person_id": "arjun-desai",
+      "name": "Arjun Desai",
+      "team": "Product",
+      "booked_pct": 0.469
+    },
+    {
+      "person_id": "elena-petrova",
+      "name": "Elena Petrova",
+      "team": "Product",
+      "booked_pct": 0.7
+    },
+    {
+      "person_id": "ravi-menon",
+      "name": "Ravi Menon",
+      "team": "Product",
+      "booked_pct": 0.588
+    },
+    {
+      "person_id": "chloe-martin",
+      "name": "Chlo\u00e9 Martin",
+      "team": "Product",
+      "booked_pct": 0.306
+    },
+    {
+      "person_id": "yusuf-kaya",
+      "name": "Yusuf Kaya",
+      "team": "Product",
+      "booked_pct": 0.556
+    },
+    {
+      "person_id": "hannah-brooks",
+      "name": "Hannah Brooks",
+      "team": "Product",
+      "booked_pct": 0.394
+    },
+    {
+      "person_id": "leo-costa",
+      "name": "Leo Costa",
+      "team": "Product",
+      "booked_pct": 0.344
+    }
+  ],
+  "edges": [
+    {
+      "person_id": "elena-petrova",
+      "topic_id": "workflow",
+      "score": 122.49,
+      "evidence_summary": "Authored 138 PRs in Workflow, reviewed 46, answered 18 questions, active 1 day ago"
+    },
+    {
+      "person_id": "victor-hale",
+      "topic_id": "workflow",
+      "score": 95.08,
+      "evidence_summary": "Authored 108 PRs in Workflow, reviewed 27, answered 5 questions, active 1 day ago"
+    },
+    {
+      "person_id": "lena-fischer",
+      "topic_id": "workflow",
+      "score": 63.17,
+      "evidence_summary": "Authored 2 PRs in Workflow, reviewed 127, answered 13 questions, active 1 day ago"
+    },
+    {
+      "person_id": "ravi-menon",
+      "topic_id": "workflow",
+      "score": 47.86,
+      "evidence_summary": "Authored 39 PRs in Workflow, reviewed 27, answered 8 questions, active 1 day ago"
+    },
+    {
+      "person_id": "marcus-lee",
+      "topic_id": "workflow",
+      "score": 41.77,
+      "evidence_summary": "Authored 38 PRs in Workflow, reviewed 45, active 1 day ago"
+    },
+    {
+      "person_id": "isabel-moreno",
+      "topic_id": "workflow",
+      "score": 25.28,
+      "evidence_summary": "Authored 32 PRs in Workflow, reviewed 15, active 2 days ago"
+    },
+    {
+      "person_id": "dana-okafor",
+      "topic_id": "messaging",
+      "score": 95.89,
+      "evidence_summary": "Authored 128 PRs in Messaging, reviewed 19, answered 21 questions, active 1 day ago"
+    },
+    {
+      "person_id": "victor-hale",
+      "topic_id": "messaging",
+      "score": 50.57,
+      "evidence_summary": "Authored 43 PRs in Messaging, reviewed 51, answered 7 questions, active 5 days ago"
+    },
+    {
+      "person_id": "marcus-lee",
+      "topic_id": "messaging",
+      "score": 41.63,
+      "evidence_summary": "Authored 22 PRs in Messaging, reviewed 55, answered 13 questions, active today"
+    },
+    {
+      "person_id": "ken-watanabe",
+      "topic_id": "messaging",
+      "score": 24.18,
+      "evidence_summary": "Authored 21 PRs in Messaging, reviewed 27, answered 5 questions, active 2 days ago"
+    },
+    {
+      "person_id": "lena-fischer",
+      "topic_id": "messaging",
+      "score": 17.13,
+      "evidence_summary": "Authored 1 PR in Messaging, reviewed 38, active 2 days ago"
+    },
+    {
+      "person_id": "ravi-menon",
+      "topic_id": "messaging",
+      "score": 14.54,
+      "evidence_summary": "Authored 16 PRs in Messaging, reviewed 5, active 2 days ago"
+    },
+    {
+      "person_id": "dana-okafor",
+      "topic_id": "calendar",
+      "score": 23.37,
+      "evidence_summary": "Authored 33 PRs in Calendar sync, reviewed 4, answered 8 questions, active 1 day ago"
+    },
+    {
+      "person_id": "marcus-lee",
+      "topic_id": "calendar",
+      "score": 20.86,
+      "evidence_summary": "Authored 14 PRs in Calendar sync, reviewed 25, answered 10 questions, active today"
+    },
+    {
+      "person_id": "victor-hale",
+      "topic_id": "calendar",
+      "score": 16.3,
+      "evidence_summary": "Authored 17 PRs in Calendar sync, reviewed 6, answered 4 questions, active 9 days ago"
+    },
+    {
+      "person_id": "ken-watanabe",
+      "topic_id": "calendar",
+      "score": 10.85,
+      "evidence_summary": "Authored 7 PRs in Calendar sync, reviewed 10, answered 7 questions, active 17 days ago"
+    },
+    {
+      "person_id": "lena-fischer",
+      "topic_id": "calendar",
+      "score": 6.53,
+      "evidence_summary": "Authored 1 PR in Calendar sync, reviewed 16, active 17 days ago"
+    },
+    {
+      "person_id": "omar-haddad",
+      "topic_id": "calendar",
+      "score": 3.31,
+      "evidence_summary": "Authored 2 PRs in Calendar sync, reviewed 6, active 2 days ago"
+    },
+    {
+      "person_id": "isabel-moreno",
+      "topic_id": "billing",
+      "score": 58.14,
+      "evidence_summary": "Authored 60 PRs in Billing, reviewed 22, answered 11 questions, active 1 day ago"
+    },
+    {
+      "person_id": "lena-fischer",
+      "topic_id": "billing",
+      "score": 33.48,
+      "evidence_summary": "Authored 1 PR in Billing, reviewed 64, answered 6 questions, active 1 day ago"
+    },
+    {
+      "person_id": "ravi-menon",
+      "topic_id": "billing",
+      "score": 31.94,
+      "evidence_summary": "Authored 31 PRs in Billing, reviewed 5, answered 8 questions, active 1 day ago"
+    },
+    {
+      "person_id": "victor-hale",
+      "topic_id": "billing",
+      "score": 26.96,
+      "evidence_summary": "Authored 36 PRs in Billing, reviewed 7, answered 5 questions, active 6 days ago"
+    },
+    {
+      "person_id": "elena-petrova",
+      "topic_id": "billing",
+      "score": 15.22,
+      "evidence_summary": "Authored 2 PRs in Billing, reviewed 24, active 1 day ago"
+    },
+    {
+      "person_id": "marcus-lee",
+      "topic_id": "billing",
+      "score": 14.06,
+      "evidence_summary": "Authored 12 PRs in Billing, reviewed 12, answered 1 question, active today"
+    },
+    {
+      "person_id": "victor-hale",
+      "topic_id": "auth",
+      "score": 49.2,
+      "evidence_summary": "Authored 70 PRs in Auth, reviewed 23, answered 5 questions, active 5 days ago"
+    },
+    {
+      "person_id": "ravi-menon",
+      "topic_id": "auth",
+      "score": 40.06,
+      "evidence_summary": "Authored 54 PRs in Auth, reviewed 8, answered 7 questions, active 2 days ago"
+    },
+    {
+      "person_id": "marcus-lee",
+      "topic_id": "auth",
+      "score": 38.44,
+      "evidence_summary": "Authored 40 PRs in Auth, reviewed 38, answered 9 questions, active 1 day ago"
+    },
+    {
+      "person_id": "lena-fischer",
+      "topic_id": "auth",
+      "score": 38.43,
+      "evidence_summary": "Authored 8 PRs in Auth, reviewed 77, answered 6 questions, active 2 days ago"
+    },
+    {
+      "person_id": "ken-watanabe",
+      "topic_id": "auth",
+      "score": 23.0,
+      "evidence_summary": "Authored 19 PRs in Auth, reviewed 28, active 1 day ago"
+    },
+    {
+      "person_id": "omar-haddad",
+      "topic_id": "auth",
+      "score": 21.75,
+      "evidence_summary": "Authored 18 PRs in Auth, reviewed 25, active 1 day ago"
+    },
+    {
+      "person_id": "victor-hale",
+      "topic_id": "metadata",
+      "score": 338.8,
+      "evidence_summary": "Authored 426 PRs in Metadata, reviewed 94, answered 12 questions, active 1 day ago"
+    },
+    {
+      "person_id": "lena-fischer",
+      "topic_id": "metadata",
+      "score": 179.59,
+      "evidence_summary": "Authored 76 PRs in Metadata, reviewed 322, answered 14 questions, active 1 day ago"
+    },
+    {
+      "person_id": "ken-watanabe",
+      "topic_id": "metadata",
+      "score": 154.73,
+      "evidence_summary": "Authored 147 PRs in Metadata, reviewed 175, answered 8 questions, active 1 day ago"
+    },
+    {
+      "person_id": "omar-haddad",
+      "topic_id": "metadata",
+      "score": 123.2,
+      "evidence_summary": "Authored 114 PRs in Metadata, reviewed 116, answered 8 questions, active 1 day ago"
+    },
+    {
+      "person_id": "marcus-lee",
+      "topic_id": "metadata",
+      "score": 117.78,
+      "evidence_summary": "Authored 121 PRs in Metadata, reviewed 142, active 1 day ago"
+    },
+    {
+      "person_id": "elena-petrova",
+      "topic_id": "metadata",
+      "score": 112.92,
+      "evidence_summary": "Authored 105 PRs in Metadata, reviewed 72, active 1 day ago"
+    },
+    {
+      "person_id": "omar-haddad",
+      "topic_id": "file-storage",
+      "score": 18.41,
+      "evidence_summary": "Authored 18 PRs in File storage, reviewed 11, answered 7 questions, active 1 day ago"
+    },
+    {
+      "person_id": "lena-fischer",
+      "topic_id": "file-storage",
+      "score": 16.84,
+      "evidence_summary": "Authored 5 PRs in File storage, reviewed 24, answered 7 questions, active 2 days ago"
+    },
+    {
+      "person_id": "ken-watanabe",
+      "topic_id": "file-storage",
+      "score": 15.5,
+      "evidence_summary": "Authored 17 PRs in File storage, reviewed 11, answered 7 questions, active 2 days ago"
+    },
+    {
+      "person_id": "victor-hale",
+      "topic_id": "file-storage",
+      "score": 13.9,
+      "evidence_summary": "Authored 18 PRs in File storage, reviewed 2, answered 4 questions, active 10 days ago"
+    },
+    {
+      "person_id": "isabel-moreno",
+      "topic_id": "file-storage",
+      "score": 10.55,
+      "evidence_summary": "Authored 5 PRs in File storage, reviewed 18, active 12 days ago"
+    },
+    {
+      "person_id": "marcus-lee",
+      "topic_id": "file-storage",
+      "score": 7.58,
+      "evidence_summary": "Authored 8 PRs in File storage, reviewed 8, active 1 day ago"
+    },
+    {
+      "person_id": "omar-haddad",
+      "topic_id": "message-queue",
+      "score": 20.0,
+      "evidence_summary": "Authored 18 PRs in Message queue / jobs, reviewed 7, answered 10 questions, active 2 days ago"
+    },
+    {
+      "person_id": "victor-hale",
+      "topic_id": "message-queue",
+      "score": 19.44,
+      "evidence_summary": "Authored 18 PRs in Message queue / jobs, reviewed 11, answered 5 questions, active 1 day ago"
+    },
+    {
+      "person_id": "lena-fischer",
+      "topic_id": "message-queue",
+      "score": 16.15,
+      "evidence_summary": "Authored 5 PRs in Message queue / jobs, reviewed 22, answered 8 questions, active 1 day ago"
+    },
+    {
+      "person_id": "marcus-lee",
+      "topic_id": "message-queue",
+      "score": 11.5,
+      "evidence_summary": "Authored 11 PRs in Message queue / jobs, reviewed 7, answered 3 questions, active 1 day ago"
+    },
+    {
+      "person_id": "isabel-moreno",
+      "topic_id": "message-queue",
+      "score": 10.1,
+      "evidence_summary": "Authored 8 PRs in Message queue / jobs, reviewed 11, active 11 days ago"
+    },
+    {
+      "person_id": "dana-okafor",
+      "topic_id": "message-queue",
+      "score": 9.51,
+      "evidence_summary": "Authored 13 PRs in Message queue / jobs, reviewed 2, active 5 days ago"
+    },
+    {
+      "person_id": "victor-hale",
+      "topic_id": "frontend",
+      "score": 353.2,
+      "evidence_summary": "Authored 465 PRs in Frontend, reviewed 98, answered 13 questions, active 1 day ago"
+    },
+    {
+      "person_id": "ravi-menon",
+      "topic_id": "frontend",
+      "score": 205.97,
+      "evidence_summary": "Authored 226 PRs in Frontend, reviewed 97, answered 10 questions, active 1 day ago"
+    },
+    {
+      "person_id": "lena-fischer",
+      "topic_id": "frontend",
+      "score": 184.63,
+      "evidence_summary": "Authored 63 PRs in Frontend, reviewed 356, answered 9 questions, active 1 day ago"
+    },
+    {
+      "person_id": "elena-petrova",
+      "topic_id": "frontend",
+      "score": 181.0,
+      "evidence_summary": "Authored 161 PRs in Frontend, reviewed 108, answered 8 questions, active 1 day ago"
+    },
+    {
+      "person_id": "omar-haddad",
+      "topic_id": "frontend",
+      "score": 136.54,
+      "evidence_summary": "Authored 138 PRs in Frontend, reviewed 119, active 1 day ago"
+    },
+    {
+      "person_id": "marcus-lee",
+      "topic_id": "frontend",
+      "score": 125.33,
+      "evidence_summary": "Authored 102 PRs in Frontend, reviewed 188, active 1 day ago"
+    },
+    {
+      "person_id": "ben-carter",
+      "topic_id": "deploys",
+      "score": 6.67,
+      "evidence_summary": "Answered 14 questions, active 9 days ago"
+    },
+    {
+      "person_id": "jordan-blake",
+      "topic_id": "deploys",
+      "score": 4.42,
+      "evidence_summary": "Answered 10 questions, active 11 days ago"
+    },
+    {
+      "person_id": "sam-patel",
+      "topic_id": "deploys",
+      "score": 2.5,
+      "evidence_summary": "Answered 6 questions, active 26 days ago"
+    },
+    {
+      "person_id": "victor-hale",
+      "topic_id": "deploys",
+      "score": 1.22,
+      "evidence_summary": "Answered 3 questions, active 18 days ago"
+    },
+    {
+      "person_id": "hannah-brooks",
+      "topic_id": "deploys",
+      "score": 0.26,
+      "evidence_summary": "Active 31 days ago"
+    },
+    {
+      "person_id": "leo-costa",
+      "topic_id": "deploys",
+      "score": 0.22,
+      "evidence_summary": "Active 11 days ago"
+    },
+    {
+      "person_id": "sam-patel",
+      "topic_id": "on-call",
+      "score": 5.46,
+      "evidence_summary": "Answered 15 questions, active 10 days ago"
+    },
+    {
+      "person_id": "daniel-novak",
+      "topic_id": "on-call",
+      "score": 3.35,
+      "evidence_summary": "Answered 9 questions, active 31 days ago"
+    },
+    {
+      "person_id": "jordan-blake",
+      "topic_id": "on-call",
+      "score": 3.19,
+      "evidence_summary": "Answered 8 questions, active 43 days ago"
+    },
+    {
+      "person_id": "grace-liu",
+      "topic_id": "on-call",
+      "score": 0.25,
+      "evidence_summary": "Active 61 days ago"
+    },
+    {
+      "person_id": "omar-haddad",
+      "topic_id": "on-call",
+      "score": 0.16,
+      "evidence_summary": "Active 10 days ago"
+    },
+    {
+      "person_id": "yusuf-kaya",
+      "topic_id": "on-call",
+      "score": 0.15,
+      "evidence_summary": "Active 80 days ago"
+    }
+  ]
+}

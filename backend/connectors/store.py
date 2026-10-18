@@ -29,6 +29,11 @@ def store(conn, artifacts: list[Artifact], events: list[Event]) -> None:
             topic_rows,
         )
         cur.executemany(
+            "insert into sync_log (source, synced_at) values (%s, now()) "
+            "on conflict (source) do update set synced_at = now()",
+            [(src,) for src in {a.source for a in artifacts}],
+        )
+        cur.executemany(
             """
             insert into events (source, type, person_id, artifact_id, paths, timestamp, url)
             values (%s, %s, %s, %s, %s, %s, %s)

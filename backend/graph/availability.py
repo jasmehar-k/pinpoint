@@ -10,7 +10,7 @@ So a free person with no reviews is 1.0, someone 78% booked with 6 open reviews 
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
-from schema import Availability, AvailabilityResponse, Meeting, Slot
+from schema import Availability, AvailabilityResponse, Busy, Meeting, Slot
 
 TZ = ZoneInfo("America/Los_Angeles")
 DAY_START, DAY_END = time(9), time(17)
@@ -83,8 +83,9 @@ def availability(meetings: list[Meeting], person_ids: list[str], open_reviews: d
         reviews = open_reviews.get(p, 0)
         people.append(Availability(person_id=p, booked_pct=pct, open_reviews=reviews, factor=factor(pct, reviews)))
     work = working_intervals(days)
+    busy = [Busy(person_id=p, start=s, end=e) for p in person_ids for s, e in busy_intervals(meetings, p)]
     return AvailabilityResponse(window_start=work[0][0], window_end=work[-1][1], people=people,
-                                mutual_free_slots=free_slots(meetings, person_ids, days, now))
+                                mutual_free_slots=free_slots(meetings, person_ids, days, now), busy=busy)
 
 
 # ---- DB layer ----

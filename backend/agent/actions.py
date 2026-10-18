@@ -7,15 +7,18 @@ Sends go to real Slack only in live mode for people with a slack_user_id; otherw
 simulated (the action still records what would have been sent)."""
 
 import os
+import re
 import uuid
 from datetime import UTC, datetime
 
 from psycopg.types.json import Jsonb
 
 import config
+import llm
+from agent.compose import drop_unlisted_people, tidy_dm
 from graph.availability import TZ, demo_week, free_slots, load_meetings
-from org import people_by_id
-from schema import PendingAction, ScheduleMeetingPayload, SendMessagePayload
+from org import load_org, people_by_id
+from schema import Citation, PendingAction, ScheduleMeetingPayload, SendMessagePayload
 
 
 class ActionError(Exception):
@@ -111,8 +114,65 @@ def _send(action: PendingAction) -> dict:
     web = client()
     channel = web.conversations_open(users=to.slack_user_id)["channel"]["id"]
     by = f", on behalf of {sender.name}" if sender else ""
-    res = web.chat_postMessage(channel=channel, text=f"*Pinpoint{by}:*\n{action.payload.text}")
+    res = web.chat_postMessage(channel=channel, text=f"*Pinpoint{by}:*\n{action.payload.text}"
+                               + context_line(action.payload.context), unfurl_links=False)
     return {"delivery": "slack", "channel": channel, "ts": res["ts"]}
+
+
+APP_URL = os.getenv("PINPOINT_APP_URL", "http://localhost:3000")
+
+
+def context_line(context: list[Citation]) -> str:
+    """The DM's sources as Slack links, so the recipient sees what it's about."""
+    if not context:
+        return ""
+    links = [f"<{APP_URL.rstrip('/') + c.url if c.url.startswith('/') else c.url}|{c.title[:60]}>" for c in context]
+    return "\n\nContext: " + " · ".join(links)
+
+
+# ---- rewrite ----
+
+REWRITE_SYSTEM = """Rewrite this Slack DM to be shorter: 1 or 2 sentences. Keep the asker's short intro, \
+the ask for time, and any PR number. Same friendly tone, first names only, no em dashes. Reply with \
+only the new message."""
+
+
+def _shorter_fallback(text: str) -> str:
+    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+    return " ".join(sentences[:2])
+
+
+def rewrite(conn, action_id: str, style: str = "shorter") -> PendingAction:
+    """Redraft a pending DM. Falls back to its first two sentences if the LLM fails."""
+    current = get(conn, action_id)
+    if current is None:
+        raise ActionError("not found")
+    if current.kind != "send_message" or current.status not in ("pending", "failed"):
+        raise ValueError("only pending DMs can be rewritten")
+    people = people_by_id()
+    recipient, asker = people[current.payload.to], people.get(current.requested_by)
+    original = current.payload.text
+
+    def check(text: str) -> str:
+        if not text.strip() or len(text) >= len(original):
+            raise ValueError("not shorter")
+        return text
+
+    messages = [{"role": "system", "content": REWRITE_SYSTEM}, {"role": "user", "content": original}]
+    try:
+        text = check(llm.cached_chat(messages, validate=check).strip().strip('"'))
+    except Exception as e:  # timeout, rate limit, or not actually shorter
+        print(f"rewrite fell back: {type(e).__name__}: {str(e)[:120]}")
+        text = _shorter_fallback(original)
+    allowed = {recipient.id} | ({asker.id} if asker else set())
+    text = tidy_dm(drop_unlisted_people(text, load_org().people, allowed) or text, recipient)
+    payload = current.payload.model_copy(update={"text": text})
+    row = conn.execute(
+        f"update pending_actions set payload = %s where id = %s returning {_COLUMNS}",
+        (Jsonb(payload.model_dump(mode="json")), action_id),
+    ).fetchone()
+    conn.commit()
+    return _row_to_action(row)
 
 
 def _schedule(conn, action: PendingAction, now: datetime) -> dict:

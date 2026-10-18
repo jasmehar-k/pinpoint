@@ -7,6 +7,7 @@ export interface Health {
   status: "ok";
   mode: "seeded" | "live";
   db: boolean;
+  synced_at?: string | null; // last ingest, for "Synced 3 min ago"
 }
 
 export interface Citation {
@@ -60,11 +61,19 @@ export interface AvailabilityResponse {
   window_end: string;
   people: Availability[];
   mutual_free_slots: Slot[];
+  busy?: Busy[]; // merged busy stretches per person, no titles
+}
+
+export interface Busy {
+  person_id: string;
+  start: string;
+  end: string;
 }
 
 export interface SendMessagePayload {
   to: string;
   text: string;
+  context?: Citation[]; // sources the DM is about, shown as chips
 }
 
 export interface ScheduleMeetingPayload {
@@ -132,4 +141,42 @@ export interface ArtifactResponse {
   text: string;
   messages?: ThreadMessage[] | null; // threads only, in order
   people: ArtifactPerson[];
+}
+
+// ---- POST /actions/{id}/rewrite ----
+
+export interface RewriteRequest {
+  style: "shorter";
+}
+
+// ---- GET /graph ----
+
+export interface GraphTopic {
+  id: string;
+  name: string;
+  experts: string[]; // person ids at or above the threshold, best first
+  bus_factor: number; // experts.length: 1 = red, 2 = amber, 3+ = green
+  next_closest: string | null; // best person below the threshold
+}
+
+export interface GraphPerson {
+  person_id: string;
+  name: string;
+  team: string;
+  booked_pct: number;
+}
+
+export interface GraphEdge {
+  person_id: string;
+  topic_id: string;
+  score: number;
+  evidence_summary: string;
+}
+
+export interface GraphResponse {
+  // An expert scores at least threshold x the topic's top score (relative: scores differ ~50x by topic)
+  threshold: number;
+  topics: GraphTopic[];
+  people: GraphPerson[];
+  edges: GraphEdge[];
 }
