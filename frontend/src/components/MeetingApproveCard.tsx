@@ -84,7 +84,8 @@ export function MeetingApproveCard({ action, availability }: { action: MeetingAc
   );
 }
 
-// Mon–Fri of the window. Columns on wider screens, one row per day on phones.
+// Mon–Fri of the window. Five columns when the card is wide enough (a container query, since
+// the chat panel is narrow even on a big screen), otherwise one row per day.
 function WeekView({
   days,
   slots,
@@ -101,17 +102,18 @@ function WeekView({
   disabled: boolean;
 }) {
   return (
-    <div role="group" aria-label="Free times for everyone" className="mt-3 grid gap-2 sm:grid-cols-5">
+    <div className="@container">
+    <div role="group" aria-label="Free times for everyone" className="mt-3 grid gap-2 @xl:grid-cols-5">
       {days.map((day) => {
         const daySlots = slots.filter((s) => dayKey(s.start) === dayKey(day));
         return (
           <div
             key={dayKey(day)}
-            className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-2 sm:flex-col sm:items-stretch sm:gap-1.5 dark:border-zinc-800 dark:bg-zinc-900"
+            className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-2 @xl:flex-col @xl:items-stretch @xl:gap-1.5 dark:border-zinc-800 dark:bg-zinc-900"
           >
-            <span className="w-20 shrink-0 text-xs font-medium text-zinc-600 sm:w-auto sm:text-center dark:text-zinc-400">{formatDay(day)}</span>
-            <div className="flex flex-1 flex-wrap gap-1.5 sm:flex-col">
-              {daySlots.length === 0 && <span className="py-1.5 text-xs text-zinc-400 sm:text-center">No shared time</span>}
+            <span className="w-20 shrink-0 text-xs font-medium text-zinc-600 @xl:w-auto @xl:text-center dark:text-zinc-400">{formatDay(day)}</span>
+            <div className="flex flex-1 flex-wrap gap-1.5 @xl:flex-col">
+              {daySlots.length === 0 && <span className="py-1.5 text-xs text-zinc-400 @xl:text-center">No shared time</span>}
               {daySlots.map((s) => {
                 const isTaken = taken.includes(startOf(s));
                 const isSelected = !isTaken && sameSlot(s, selected);
@@ -140,6 +142,7 @@ function WeekView({
           </div>
         );
       })}
+    </div>
     </div>
   );
 }

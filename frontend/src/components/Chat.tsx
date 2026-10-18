@@ -6,7 +6,7 @@ import { sendChat } from "@/lib/api";
 import { DEMO_USER, SUGGESTED_QUESTIONS } from "@/lib/demo";
 import type { ChatResponse } from "@/lib/types";
 
-import { CitedText, SourceList } from "./CitedText";
+import { CitedText, SourceChips } from "./CitedText";
 import { DmApproveCard } from "./DmApproveCard";
 import { ExpertList } from "./ExpertCard";
 import { MeetingApproveCard } from "./MeetingApproveCard";
@@ -61,9 +61,12 @@ export function Chat() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6">
+    <section aria-label="Ask Pinpoint" className="flex min-h-0 flex-col rounded-xl border border-zinc-200 bg-white">
+      <header className="border-b border-zinc-100 px-5 py-4">
+        <h2 className="font-semibold">Ask Pinpoint</h2>
+      </header>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="flex flex-col gap-4 px-4 py-5 sm:px-5">
           {messages.length === 0 && <EmptyState onPick={ask} />}
           {messages.map((m) => (
             <MessageView key={m.id} message={m} onRetry={ask} />
@@ -73,8 +76,8 @@ export function Chat() {
         </div>
       </div>
 
-      <form onSubmit={onSubmit} className="border-t border-zinc-200 bg-background dark:border-zinc-800">
-        <div className="mx-auto flex max-w-3xl items-end gap-2 px-4 py-3">
+      <form onSubmit={onSubmit} className="border-t border-zinc-100">
+        <div className="flex items-end gap-2 px-4 py-3 sm:px-5">
           <textarea
             ref={inputRef}
             value={input}
@@ -87,20 +90,20 @@ export function Chat() {
             }}
             disabled={loading}
             rows={1}
-            placeholder={loading ? "Waiting for the answer…" : "Ask how something works"}
+            placeholder={loading ? "Waiting for the answer…" : messages.length ? "Ask a follow-up" : "Ask how something works"}
             aria-label="Your question"
             className="max-h-40 min-h-11 flex-1 resize-none [field-sizing:content] rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-[15px] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:disabled:bg-zinc-800"
           />
           <button
             type="submit"
             disabled={loading || !input.trim()}
-            className="h-11 shrink-0 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-zinc-300 dark:disabled:bg-zinc-700"
+            className="h-11 shrink-0 rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-300"
           >
             Ask
           </button>
         </div>
       </form>
-    </div>
+    </section>
   );
 }
 
@@ -123,13 +126,18 @@ function MessageView({ message, onRetry }: { message: Message; onRetry: (q: stri
     );
   }
   const { reply, experts = [], pending_actions = [], availability } = message.response;
+  // With experts, the backend's last paragraph is its code-written routing line ("Dana knows
+  // this best but…"). It reads better after the cards, as in the mockup.
+  const paragraphs = reply.text.split(/\n{2,}/);
+  const routing = experts.length > 0 && paragraphs.length > 1 ? paragraphs.pop() : null;
   return (
     <div className="flex flex-col gap-3">
-      <div className="max-w-full rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-4 py-3 text-[15px] leading-relaxed dark:border-zinc-800 dark:bg-zinc-900">
-        <CitedText text={reply.text} citations={reply.citations} />
-        <SourceList citations={reply.citations} />
+      <div data-answer className="text-[15px] leading-relaxed">
+        <CitedText text={paragraphs.join("\n\n")} citations={reply.citations} />
+        <SourceChips citations={reply.citations} />
       </div>
       <ExpertList experts={experts} />
+      {routing && <p className="text-[15px] leading-relaxed">{routing}</p>}
       {pending_actions.map((a) =>
         a.kind === "send_message" ? (
           <DmApproveCard key={a.id} action={a} />
@@ -171,12 +179,12 @@ function Thinking() {
 
 function EmptyState({ onPick }: { onPick: (q: string) => void }) {
   return (
-    <div className="py-8">
-      <h2 className="text-xl font-semibold">Hi {DEMO_USER.name.split(" ")[0]}, what are you trying to figure out?</h2>
+    <div className="py-4">
+      <h2 className="text-lg font-semibold">Hi {DEMO_USER.name.split(" ")[0]}, what are you trying to figure out?</h2>
       <p className="mt-1 text-sm text-zinc-500">
         Answers come from your team&apos;s PRs and Slack threads, with a link for every claim, plus who to ask.
       </p>
-      <div className="mt-5 grid gap-2 sm:grid-cols-2">
+      <div className="mt-5 grid gap-2">
         {SUGGESTED_QUESTIONS.map((q) => (
           <button
             key={q}
