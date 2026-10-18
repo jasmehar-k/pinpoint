@@ -65,3 +65,45 @@ def test_known_prs_are_found(conn, question, expected, k):
 def test_every_artifact_is_embedded(conn):
     missing = conn.execute("select count(*) from artifacts where embedding is null").fetchone()[0]
     assert missing == 0
+
+
+# ---- expert ranking (before availability) ----
+
+from graph.experts import find_experts  # noqa: E402
+
+
+def _ranked_ids(conn, question):
+    return [e.person_id for e in find_experts(conn, question, asker_id="priya-shah")]
+
+
+def test_email_sync_ranks_dana_then_her_reviewers(conn):
+    ids = _ranked_ids(conn, "How does inbound email sync work?")
+    assert ids[0] == "dana-okafor"
+    assert set(ids[:3]) == {"dana-okafor", "marcus-lee", "victor-hale"}
+
+
+def test_marcus_evidence_names_dana(conn):
+    marcus = next(e for e in find_experts(conn, "How does inbound email sync work?", asker_id="priya-shah")
+                  if e.person_id == "marcus-lee")
+    assert marcus.topic == "messaging"
+    assert marcus.evidence_summary.startswith("Reviewed ") and "of Dana's Messaging PRs" in marcus.evidence_summary
+    assert marcus.same_team
+
+
+@pytest.mark.parametrize("question,owner", [
+    ("How are subscriptions and plan upgrades billed?", "isabel-moreno"),
+    ("How do workflow triggers and actions run?", "elena-petrova"),
+])
+def test_topic_owners_rank_first(conn, question, owner):
+    assert _ranked_ids(conn, question)[0] == owner
+
+
+def test_asker_is_never_an_expert(conn):
+    for question, _ in TOPIC_CASES:
+        assert "priya-shah" not in _ranked_ids(conn, question)
+
+
+def test_evidence_urls_exist(conn):
+    for e in find_experts(conn, "How does inbound email sync work?"):
+        for ev in e.evidence:
+            assert conn.execute("select 1 from artifacts where url = %s", (ev.url,)).fetchone(), ev.url

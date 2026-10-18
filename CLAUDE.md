@@ -45,12 +45,18 @@ Backend (Python 3.13, managed with `uv`; run from `backend/`, which is the impor
 ```
 uv sync                                   # install
 uv run uvicorn api.main:app --reload      # API on :8000
-uv run pytest                             # all tests
+uv run pytest                             # unit tests (no network, no DB)
 uv run pytest tests/test_topics.py::test_known_paths   # one test
+uv run pytest -m demo                     # golden demo tests against the real DB
 uv run python -m scripts.init_db          # apply schema.sql (idempotent)
 uv run python -m scripts.load_people      # upsert people.json + topics
-uv run python -m scripts.ingest_slack [--days 90] [--channel help] [--no-tag] [--cached]   # public channels the bot is in; see docs/slack-setup.md. Then run embed
+uv run python -m scripts.ingest_github [--days 182] [--refresh]   # raw pages cached in backend/data/raw/github
+uv run python -m scripts.ingest_slack [--days 90] [--channel help] [--no-tag] [--cached]   # public channels the bot is in; see docs/slack-setup.md
+uv run python -m scripts.embed            # embed artifacts missing a vector (resumable)
+uv run python -m scripts.score            # rebuild the expertise table
 ```
+
+After any ingest or seed step, run `embed` then `score`, then `pytest -m demo`.
 
 Pipeline steps go in `backend/scripts/` as `python -m scripts.<step>`.
 
@@ -187,7 +193,7 @@ score(person, topic) = sum over events e of: weight(type(e)) * 0.5 ^ (age_days(e
 Twenty's CODEOWNERS only covers CI/config files, so ownership comes mostly from authorship and reviews.
 
 - Store the top 3 evidence links per (person, topic).
-- `find_experts(query)`: embed the query, get top ~20 artifacts by similarity, aggregate the people on them by similarity x type weight x decay.
+- `find_experts(query)`: embed the query, get the top 40 artifacts by similarity (20 was too few for prolific authors), aggregate the people on them by similarity x type weight x decay. The question's topic is the one most retrieved artifacts share (similarity-weighted); the evidence line uses that topic's `expertise` counts. Candidates who reviewed 10+ of the top expert's PRs in that topic get "Reviewed N of Dana's Messaging PRs". Code: `backend/graph/experts.py`, `backend/graph/scoring.py`.
 - Availability factor (0 to 1) from % of working hours booked this week + open review count. Final rank = expertise x availability. Compute availability only for the top 5 candidates.
 - Bus factor: per topic, count people above a score threshold. 1 = red, 2 = amber, 3+ = green.
 - Corrections ("I don't own this anymore", "ask X instead") write to `corrections` and down-weight or redirect that edge.
