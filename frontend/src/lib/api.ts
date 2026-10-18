@@ -9,6 +9,7 @@ import type {
   ExpertsResponse,
   Health,
   PendingAction,
+  RewriteRequest,
 } from "./types";
 
 export const USE_FIXTURES = process.env.NEXT_PUBLIC_USE_FIXTURES !== "0";
@@ -78,6 +79,17 @@ export function approveAction(action: PendingAction, body: ApproveRequest = {}):
     return fixture(action.kind === "send_message" ? "action_approve_message.json" : "action_approve_meeting.json");
   }
   return call(`/actions/${action.id}/approve`, { method: "POST", body: JSON.stringify(body) });
+}
+
+// POST /actions/{id}/rewrite: the backend rewrites the pending DM's stored text and returns
+// the updated action. Fixture mode keeps the first two sentences.
+export function rewriteAction(action: PendingAction, style: RewriteRequest["style"] = "shorter"): Promise<PendingAction> {
+  if (USE_FIXTURES) {
+    if (action.kind !== "send_message") return Promise.resolve(action);
+    const shorter = action.payload.text.match(/[^.!?]+[.!?]+/g)?.slice(0, 2).join("").trim() ?? action.payload.text;
+    return Promise.resolve({ ...action, payload: { ...action.payload, text: shorter } });
+  }
+  return call(`/actions/${action.id}/rewrite`, { method: "POST", body: JSON.stringify({ style }) });
 }
 
 // POST /actions/{id}/reject, no body. Takes the action like approveAction so fixture mode

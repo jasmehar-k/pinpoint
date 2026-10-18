@@ -54,7 +54,7 @@ export function CitedText({ text, citations }: { text: string; citations: Citati
 }
 
 // Short chip label: "PR #26180" for GitHub, "#help thread" for Slack threads.
-function shortLabel(c: Citation): string {
+export function shortLabel(c: Citation): string {
   const pr = c.title.match(/\(#(\d+)\)\s*$/);
   if (c.source === "github" && pr) return `PR #${pr[1]}`;
   const { channel } = splitTitle(c.title);
