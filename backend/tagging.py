@@ -80,6 +80,21 @@ def _tag_batch(batch: list[Artifact], client, model: str) -> dict[str, list[str]
     return {a.id: [] for a in batch}
 
 
+def reuse_tags(artifacts: list[Artifact], existing: dict[str, tuple[str, list[str]]],
+               ) -> tuple[dict[str, list[str]], list[Artifact]]:
+    """Split artifacts into (tags we can reuse, artifacts that still need the LLM).
+    `existing` maps artifact id -> (stored text, stored topics). A thread keeps its old topics
+    only if its text is unchanged and it had some, so reruns don't burn free-tier calls."""
+    reused, todo = {}, []
+    for a in artifacts:
+        text, topics = existing.get(a.id, (None, []))
+        if text == a.text and topics:
+            reused[a.id] = topics
+        else:
+            todo.append(a)
+    return reused, todo
+
+
 def tag_topics(threads: list[Artifact], client=None, model: str | None = None,
                batch_size: int = BATCH_SIZE, pause: float = 3.0) -> dict[str, list[str]]:
     """artifact id -> 1 to 3 topic ids (or [] for "other")."""

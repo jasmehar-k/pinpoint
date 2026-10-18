@@ -90,7 +90,15 @@ tagging 3 threads
 stored 3 threads (3 with topics), events {'asked': 3, 'answered': 3}
 ```
 
-Raw messages are cached in `backend/data/raw/slack/`. After posting new messages, rerun with `--refresh`, or you'll get the cached copy. Other flags: `--days 30`, `--channel help integrations`, `--no-tag`.
+Each run fetches fresh messages from Slack. Threads whose text hasn't changed keep their topics, so reruns only spend LLM calls on new or edited threads. Other flags: `--days 30`, `--channel help integrations`, `--no-tag`, `--cached` (reuse the last fetch, no Slack calls).
+
+Then make the new threads searchable:
+
+```
+uv run python -m scripts.embed
+```
+
+Privacy: topic tagging sends thread text to the free model on OpenRouter. Only public channels the bot was invited to are read; keep anything sensitive out of them, or use `--no-tag`.
 
 Check it worked in the Supabase SQL editor:
 
@@ -104,5 +112,5 @@ select id, title from artifacts where source = 'slack' order by timestamp desc l
 - **`not_in_channel`**: run `/invite @Pinpoint` in that channel.
 - **`invalid_auth`** or **`not_authed`**: the token is wrong or empty. Use the **Bot** token (`xoxb-`), not a user token (`xoxp-`). Reinstalling the app issues a new token; copy it again.
 - **`missing_scope`**: add the scope under **OAuth & Permissions**, click **Reinstall to Workspace**, and copy the new token.
-- **Zero threads**: the bot isn't in the channel (the summary lists skipped channels), the channel is private (not read on purpose), the messages are older than `--days`, or you're reading a stale cache (add `--refresh`).
+- **Zero threads**: the bot isn't in the channel (the summary lists skipped channels), the channel is private (not read on purpose), the messages are older than `--days`, or you passed `--cached` and got an old copy.
 - **Threads stored but no events**: the posters' `slack_user_id` isn't set in `people.json`, so they show up as "Someone". Fix step 5 and rerun.

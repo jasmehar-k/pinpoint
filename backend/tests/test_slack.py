@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from connectors.slack import clean_text, normalize_thread, paginate, permalink
 from schema import Artifact, Person
-from tagging import parse_tags, tag_topics
+from tagging import parse_tags, reuse_tags, tag_topics
 
 
 def _person(id_, name):
@@ -180,3 +180,15 @@ def test_tag_topics_falls_back_to_no_topics_after_two_failures():
         "slack:C1:0": [], "slack:C1:1": [],
     }
     assert len(fake.calls) == 2
+
+
+def test_reuse_tags_only_for_unchanged_tagged_threads():
+    a, b, c = _artifacts(3)
+    existing = {
+        a.id: (a.text, ["messaging"]),   # unchanged and tagged: reuse
+        b.id: ("old text", ["auth"]),    # edited since: retag
+        c.id: (c.text, []),              # never got topics: retag
+    }
+    reused, todo = reuse_tags([a, b, c], existing)
+    assert reused == {a.id: ["messaging"]}
+    assert [x.id for x in todo] == [b.id, c.id]

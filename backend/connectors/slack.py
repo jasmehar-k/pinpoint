@@ -1,7 +1,7 @@
 """Slack connector: threads in public channels the bot is a member of -> Artifacts + Events.
 
-fetch_threads() caches raw messages under backend/data/raw/slack/, one file per channel and
-day window, so reruns are free (pass refresh=True to pick up new messages).
+fetch_threads() saves raw messages under backend/data/raw/slack/, one file per channel and
+day window. It refetches by default (live data); use_cache=True reuses the saved copy offline.
 normalize_thread() is pure and does the mapping.
 """
 
@@ -83,13 +83,13 @@ def _fetch_channel(web: WebClient, channel_id: str, oldest: float) -> list[list[
     return threads
 
 
-def fetch_threads(web: WebClient, channel: dict, days: int, refresh: bool = False) -> list[list[dict]]:
+def fetch_threads(web: WebClient, channel: dict, days: int, use_cache: bool = False) -> list[list[dict]]:
     """Raw threads (each a list of messages, root first) from the last `days` days."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     path = CACHE_DIR / f"{channel['id']}_{days}d.json"
-    if path.exists() and not refresh:
+    if path.exists() and use_cache:
         cached = json.loads(path.read_text())
-        print(f"  #{channel['name']}: using cache from {cached['fetched_at']} (--refresh to refetch)")
+        print(f"  #{channel['name']}: using cache from {cached['fetched_at']}")
         return cached["threads"]
     threads = _fetch_channel(web, channel["id"], time.time() - days * 86400)
     path.write_text(json.dumps({"fetched_at": datetime.now(UTC).isoformat(), "threads": threads}))
