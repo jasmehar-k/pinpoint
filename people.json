@@ -9,10 +9,10 @@
 
     {"id": "rachel-kim", "name": "Rachel Kim", "team": "Integrations", "role": "Engineering Manager", "manager": "victor-hale", "github_login": null, "slack_handle": "rachel.kim", "slack_user_id": null},
     {"id": "dana-okafor", "name": "Dana Okafor", "team": "Integrations", "role": "Senior Engineer", "manager": "rachel-kim", "github_login": "neo773", "slack_handle": "dana.okafor", "slack_user_id": null},
-    {"id": "marcus-lee", "name": "Marcus Lee", "team": "Integrations", "role": "Staff Engineer", "manager": "rachel-kim", "github_login": "charlesBochet", "slack_handle": "marcus.lee", "slack_user_id": null},
+    {"id": "marcus-lee", "name": "Marcus Lee", "team": "Integrations", "role": "Staff Engineer", "manager": "rachel-kim", "github_login": "charlesBochet", "slack_handle": "marcus.lee", "slack_user_id": "U0CA77SLTPE"},
     {"id": "tomas-rivera", "name": "Tomás Rivera", "team": "Integrations", "role": "Software Engineer", "manager": "rachel-kim", "github_login": "BOHEUS", "slack_handle": "tomas.rivera", "slack_user_id": null},
     {"id": "aisha-bello", "name": "Aisha Bello", "team": "Integrations", "role": "Software Engineer", "manager": "rachel-kim", "github_login": "Belkouche", "slack_handle": "aisha.bello", "slack_user_id": null},
-    {"id": "priya-shah", "name": "Priya Shah", "team": "Integrations", "role": "Software Engineer (new hire)", "manager": "rachel-kim", "github_login": null, "slack_handle": "priya.shah", "slack_user_id": null},
+    {"id": "priya-shah", "name": "Priya Shah", "team": "Integrations", "role": "Software Engineer (new hire)", "manager": "rachel-kim", "github_login": null, "slack_handle": "priya.shah", "slack_user_id": "U0CAXTS3BC0"},
 
     {"id": "daniel-novak", "name": "Daniel Novak", "team": "Platform", "role": "Engineering Manager", "manager": "victor-hale", "github_login": null, "slack_handle": "daniel.novak", "slack_user_id": null},
     {"id": "lena-fischer", "name": "Lena Fischer", "team": "Platform", "role": "Staff Engineer", "manager": "daniel-novak", "github_login": "Weiko", "slack_handle": "lena.fischer", "slack_user_id": null},
