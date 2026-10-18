@@ -162,6 +162,48 @@ class PendingAction(BaseModel):
     result: dict | None = None
 
 
+class ApproveRequest(BaseModel):
+    """Body of POST /actions/{id}/approve. Pass payload to send the user's edits
+    (edited DM text, a different slot); omit it to execute the draft as is."""
+
+    payload: SendMessagePayload | ScheduleMeetingPayload | None = None
+
+
+class ChatRequest(BaseModel):
+    """Body of POST /chat."""
+
+    message: str = Field(min_length=1)
+    conversation_id: str | None = None  # omit on the first message; reuse the one in the response
+    user: str  # person id of whoever is asking, e.g. "priya-shah"
+
+
+class ThreadMessage(BaseModel):
+    person_id: str | None  # null when the poster isn't in people.json
+    name: str
+    text: str
+
+
+class ArtifactPerson(BaseModel):
+    person_id: str
+    name: str
+    type: EventType  # how they're attached: authored, reviewed, asked, answered
+
+
+class ArtifactResponse(BaseModel):
+    """GET /artifacts/{id}: a PR or thread, for the artifact page and evidence clicks."""
+
+    id: str
+    source: Source
+    kind: Literal["pr", "thread", "file", "answer"]
+    title: str | None
+    url: str
+    timestamp: datetime
+    topics: list[str]
+    text: str
+    messages: list[ThreadMessage] | None = None  # threads only, in order
+    people: list[ArtifactPerson]
+
+
 class ChatReply(BaseModel):
     text: str
     citations: list[Citation]

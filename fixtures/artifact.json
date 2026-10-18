@@ -1,0 +1,21 @@
+{
+  "id": "seed-thread-0042",
+  "source": "seed",
+  "kind": "thread",
+  "title": "#help: how does inbound Gmail sync get triggered? trying to figure out why a test...",
+  "url": "/artifacts/seed-thread-0042",
+  "timestamp": "2026-10-01T17:15:00Z",
+  "topics": ["messaging"],
+  "text": "Aisha Bello: how does inbound Gmail sync get triggered? trying to figure out why a test mailbox took a few minutes to show new emails\nDana Okafor: When Gmail or Microsoft pings our webhook, we enqueue one job that runs the list fetch for that channel right away. That's #26180. Before it, the webhook just flipped the channel to PENDING and waited up to 5 minutes for the cron, which is probably what you saw on an older build. Bursts of pings fold into one job through BullMQ dedup, so you don't get a pile of duplicate syncs. Deltas over 50 items are still left to the import cron.\nMarcus Lee: The cron is the fallback for anything webhooks miss. Since #26181 each sync cron runs one cross-workspace query per tick instead of one per workspace, so it's cheap. If a channel looks stuck, check whether it's still waiting on the cron.\nAisha Bello: perfect, that explains it. thanks both",
+  "messages": [
+    {"person_id": "aisha-bello", "name": "Aisha Bello", "text": "how does inbound Gmail sync get triggered? trying to figure out why a test mailbox took a few minutes to show new emails"},
+    {"person_id": "dana-okafor", "name": "Dana Okafor", "text": "When Gmail or Microsoft pings our webhook, we enqueue one job that runs the list fetch for that channel right away. That's #26180. Before it, the webhook just flipped the channel to PENDING and waited up to 5 minutes for the cron, which is probably what you saw on an older build. Bursts of pings fold into one job through BullMQ dedup, so you don't get a pile of duplicate syncs. Deltas over 50 items are still left to the import cron."},
+    {"person_id": "marcus-lee", "name": "Marcus Lee", "text": "The cron is the fallback for anything webhooks miss. Since #26181 each sync cron runs one cross-workspace query per tick instead of one per workspace, so it's cheap. If a channel looks stuck, check whether it's still waiting on the cron."},
+    {"person_id": "aisha-bello", "name": "Aisha Bello", "text": "perfect, that explains it. thanks both"}
+  ],
+  "people": [
+    {"person_id": "aisha-bello", "name": "Aisha Bello", "type": "asked"},
+    {"person_id": "dana-okafor", "name": "Dana Okafor", "type": "answered"},
+    {"person_id": "marcus-lee", "name": "Marcus Lee", "type": "answered"}
+  ]
+}
