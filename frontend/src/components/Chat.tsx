@@ -7,6 +7,7 @@ import { DEMO_USER, SUGGESTED_QUESTIONS } from "@/lib/demo";
 import type { ChatResponse } from "@/lib/types";
 
 import { CitedText, SourceList } from "./CitedText";
+import { DmApproveCard } from "./DmApproveCard";
 import { ExpertList } from "./ExpertCard";
 
 type Message =
@@ -120,7 +121,7 @@ function MessageView({ message, onRetry }: { message: Message; onRetry: (q: stri
       </div>
     );
   }
-  const { reply, experts = [] } = message.response;
+  const { reply, experts = [], pending_actions = [] } = message.response;
   return (
     <div className="flex flex-col gap-3">
       <div className="max-w-full rounded-2xl rounded-bl-sm border border-zinc-200 bg-white px-4 py-3 text-[15px] leading-relaxed dark:border-zinc-800 dark:bg-zinc-900">
@@ -128,6 +129,10 @@ function MessageView({ message, onRetry }: { message: Message; onRetry: (q: stri
         <SourceList citations={reply.citations} />
       </div>
       <ExpertList experts={experts} />
+      {pending_actions.map((a) =>
+        // schedule_meeting cards come in the next task
+        a.kind === "send_message" ? <DmApproveCard key={a.id} action={a} /> : null,
+      )}
     </div>
   );
 }
