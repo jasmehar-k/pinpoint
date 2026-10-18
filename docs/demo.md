@@ -33,7 +33,7 @@ About 3½ minutes. Every beat shows the agent **doing** something, and the human
 | # | Time | Do | Say / point at |
 | --- | --- | --- | --- |
 | 1 | 0:00 | Main page, nothing clicked | **The problem:** "New hires spend their first weeks not knowing who to ask. They ping the most senior person, who is swamped, or they stay stuck. **The user:** Priya, three days into Integrations." |
-| 2 | 0:20 | Click **How does inbound email sync work?** | "Pinpoint answers first, from the team's own PRs and Slack threads." |
+| 2 | 0:20 | Click **How does inbound email sync work?** | "Pinpoint answers first, from the team's own artifacts, such as PRs and Slack threads." |
 | 3 | 0:35 | Click citation chip **2** (PR #26180 opens), come back | "Every sentence links to its source. If it can't cite it, it doesn't say it." |
 | 4 | 0:50 | Scroll to the expert cards; point at the graph; click **Show evidence** on Marcus | "Then it finds who knows this, with receipts. Dana wrote most of it, 128 PRs, but she's 78% booked. Marcus reviewed 38 of her PRs and has time, so he's Recommended. The graph ranks by expertise alone: Marcus is third there, first here, because he has time. To enable Pinpoint to be ever-improving, if it's wrong, click **Not the right person?** and it corrects it for everyone." |
 | 5 | 1:25 | Change a word in the draft (it opens "I'm Priya, new on Integrations"), click **Approve and send** | "It drafted the DM with the context attached. **Nothing is sent until Priya approves.**" **Harshita holds up the phone: the DM from Pinpoint, on behalf of Priya, has arrived.** |
