@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { displayTitle } from "@/lib/titles";
+import { displayTitle, splitTitle } from "@/lib/titles";
 import type { Citation } from "@/lib/types";
 
 // Seeded threads link to /artifacts/{id} in this app; everything else is external.
@@ -53,21 +53,32 @@ export function CitedText({ text, citations }: { text: string; citations: Citati
   );
 }
 
-const SOURCE_LABEL = { github: "GitHub", slack: "Slack", seed: "Slack" } as const;
+// Short chip label: "PR #26180" for GitHub, "#help thread" for Slack threads.
+function shortLabel(c: Citation): string {
+  const pr = c.title.match(/\(#(\d+)\)\s*$/);
+  if (c.source === "github" && pr) return `PR #${pr[1]}`;
+  const { channel } = splitTitle(c.title);
+  if (channel) return `#${channel} thread`;
+  return c.title.length > 32 ? `${c.title.slice(0, 30)}…` : c.title;
+}
 
-export function SourceList({ citations }: { citations: Citation[] }) {
+// The answer's sources as a row of chips under the text, numbered like the inline markers.
+export function SourceChips({ citations }: { citations: Citation[] }) {
   if (citations.length === 0) return null;
   return (
-    <ol className="mt-3 space-y-1 border-t border-zinc-200 pt-3 text-sm dark:border-zinc-800">
+    <ul aria-label="Sources" className="mt-3 flex flex-wrap gap-1.5">
       {citations.map((c) => (
-        <li key={c.id} className="flex min-w-0 items-baseline gap-2">
-          <span className={chip}>{c.id}</span>
-          <SourceLink url={c.url} title={c.title} className="line-clamp-2 min-w-0 text-zinc-700 hover:underline dark:text-zinc-300">
-            {displayTitle(c.title)}
+        <li key={c.id}>
+          <SourceLink
+            url={c.url}
+            title={displayTitle(c.title)}
+            className="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-1 font-mono text-xs text-blue-800 hover:bg-blue-100"
+          >
+            <span className="font-semibold">{c.id}</span>
+            {shortLabel(c)}
           </SourceLink>
-          <span className="shrink-0 text-xs text-zinc-500">{SOURCE_LABEL[c.source]}</span>
         </li>
       ))}
-    </ol>
+    </ul>
   );
 }
