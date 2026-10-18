@@ -30,3 +30,27 @@ export function timeAgo(iso: string, now: Date = new Date()): string {
   if (days < 60) return `${days} days ago`;
   return `${Math.floor(days / 30)} months ago`;
 }
+
+const weekdayFmt = new Intl.DateTimeFormat("en-US", { timeZone: ORG_TZ, weekday: "short" });
+
+// "10:30 – 11:00 AM", or "11:30 AM – 12:00 PM" when the slot crosses noon.
+export function formatSlot(slot: { start: string; end: string }): string {
+  const start = formatTime(slot.start);
+  const end = formatTime(slot.end);
+  const sameHalf = start.slice(-2) === end.slice(-2);
+  return `${sameHalf ? start.slice(0, -3) : start} – ${end}`;
+}
+
+// Pacific weekdays from start to end, inclusive, one ISO timestamp per day; pass them to
+// dayKey/formatDay. Steps 24h from the window start (9 AM), so a DST shift moves the
+// hour, never the day.
+export function weekdaysBetween(startIso: string, endIso: string): string[] {
+  const last = dayKey(endIso);
+  const days: string[] = [];
+  for (let t = new Date(startIso).getTime(); dayKey(new Date(t).toISOString()) <= last; t += 86_400_000) {
+    const iso = new Date(t).toISOString();
+    if (!["Sat", "Sun"].includes(weekdayFmt.format(new Date(iso)))) days.push(iso);
+    if (days.length > 14) break; // a window is a week; guard against bad input
+  }
+  return days;
+}
