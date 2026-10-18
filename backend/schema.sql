@@ -20,7 +20,7 @@ create table if not exists topics (
 );
 
 -- One row per PR, Slack thread, file or promoted answer.
--- Embedding dimension must match the embedding model.
+-- 384 = BAAI/bge-small-en-v1.5 via fastembed. Must match embeddings.py.
 create table if not exists artifacts (
     id        text primary key,
     source    text not null check (source in ('slack', 'github', 'seed')),
@@ -29,7 +29,7 @@ create table if not exists artifacts (
     text      text not null,
     url       text not null,
     timestamp timestamptz not null,
-    embedding vector(1024)
+    embedding vector(384)
 );
 
 create index if not exists artifacts_embedding_idx

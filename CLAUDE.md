@@ -69,8 +69,8 @@ Fixtures: `frontend/public/fixtures` is a symlink to `/fixtures`. Fixture mode i
 | Backend | Python, FastAPI |
 | DB | Postgres + pgvector on Supabase (use the session pooler connection string, not the direct one) |
 | Graph math | NetworkX in memory. No graph database. |
-| LLM | Tool-calling model via API (agent loop, topic tagging, seed generation) |
-| Embeddings | Hosted embedding API, stored in pgvector |
+| LLM | Free open-source model on OpenRouter, via the `openai` SDK (`backend/llm.py`). Model name in `LLM_MODEL`; must support tool calling. Used for the agent loop, topic tagging, seed generation |
+| Embeddings | Local, free: fastembed + `BAAI/bge-small-en-v1.5` (384 dims, CPU, works offline), `backend/embeddings.py`. Stored in pgvector |
 | Frontend | Next.js + react-force-graph |
 | Integrations | Nango for Slack/GitHub OAuth; fallback is raw tokens in `.env` |
 | Slack SDK | `slack_sdk` |
@@ -100,7 +100,7 @@ There is no real company data. Two layers, both loaded through the same Event sc
 Topics = top-level modules of the Twenty server, plus a few non-code ones:
 Workflow, Messaging (email sync), Calendar sync, Billing, Auth, Metadata (custom objects), File storage, Message queue / jobs, Frontend, Deploys, On-call.
 
-Map files to topics by path. For Slack threads, one LLM call per thread tags 1 to 3 topics from this fixed list (or "other"). Do not use clustering to discover topics.
+Map files to topics by path. For Slack threads, the LLM tags 1 to 3 topics per thread from this fixed list (or "other"). Batch ~25 threads per call, and generate seed threads ~10 per call: free OpenRouter models are rate-limited per minute and per day. Do not use clustering to discover topics.
 
 Path map, checked against the repo (prefixes under `packages/twenty-server/src/`, first match wins):
 
@@ -147,7 +147,7 @@ Event {
 ```
 
 Tables: `people`, `topics`, `artifacts`, `events`, `expertise`, `meetings`, `pending_actions`, `corrections`, `user_profiles`, plus `artifact_topics` (artifact to topic, from paths or LLM tags). DDL is `backend/schema.sql`. Notes:
-- An event's text lives on its artifact (embedding `vector(1024)`; change the dimension if the embedding model differs).
+- An event's text lives on its artifact (embedding `vector(384)`; it must match the model in `embeddings.py`).
 - `meetings` uses `start_at`/`end_at` (`end` is reserved) and a `seeded` flag; `reset_demo` deletes rows with `seeded = false`.
 - `people.open_reviews` is seeded by `gen_meetings`.
 - `people.slack_user_id` set = real Slack DM; null = simulated send (`result.delivery = "simulated"`).
