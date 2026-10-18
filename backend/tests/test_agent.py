@@ -134,3 +134,10 @@ def test_answer_sources_cap_threads():
                 snippet="") for i, s in enumerate(srcs)]
     picked = answer_sources(hits)
     assert [h.id for h in picked] == ["a0", "a1", "a2", "a4", "a6", "a7"]
+
+
+def test_tidy_dm():
+    from agent.compose import tidy_dm
+    marcus = next(p for p in PEOPLE if p.id == "marcus-lee")
+    assert tidy_dm("Hey Marcus Lee, I want to understand sync—specifically webhooks.", marcus) == \
+        "Hey Marcus, I want to understand sync, specifically webhooks."
