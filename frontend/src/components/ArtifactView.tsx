@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { ApiError, getArtifact } from "@/lib/api";
 import { formatDay } from "@/lib/time";
+import { questionOf, splitTitle } from "@/lib/titles";
 import { topicName } from "@/lib/topics";
 import type { ArtifactPerson, ArtifactResponse, EventType, ThreadMessage } from "@/lib/types";
 
@@ -159,19 +160,6 @@ function roleOf(m: ThreadMessage, people: ArtifactPerson[], index: number): stri
   if (index === 0) return ROLE.asked;
   if (m.person_id && people.some((p) => p.person_id === m.person_id && p.type === "answered")) return ROLE.answered;
   return undefined;
-}
-
-// "#help: how does…" -> channel "help", title "how does…". PR titles pass through.
-function splitTitle(raw: string | null): { channel?: string; title: string } {
-  const match = raw?.match(/^#([\w-]+):\s+([\s\S]*)$/);
-  return match ? { channel: match[1], title: match[2] } : { title: raw ?? "Untitled" };
-}
-
-// Seeded thread titles are cut at 80 chars ("how does X work? trying to..."); the heading
-// keeps just the question: "How does X work?"
-function questionOf(title: string): string {
-  const q = title.match(/^[^?]*\?/)?.[0] ?? title;
-  return q.charAt(0).toUpperCase() + q.slice(1);
 }
 
 // PR text is stored as "title\n\nbody"; the heading already shows the title.
