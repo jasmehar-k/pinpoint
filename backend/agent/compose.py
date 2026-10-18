@@ -111,8 +111,10 @@ note"). Every sentence must end with at least one source number in square bracke
 mention a PR number, cite the source that is that PR. PR sources are merged code changes and are \
 the most reliable; THREAD sources are team discussions. Base the answer on PRs where they cover the \
 question, and never name a class, function, file or event that isn't written in a source. If the \
-sources don't answer it, say so in one sentence. Never mention any person by name, and don't \
-recommend who to ask; that is handled separately.
+question only asks who to talk to, give a short primer on the topic instead: what it is and what \
+changed recently, from the sources. If the sources don't answer it, say so in one sentence. Never \
+mention people, who replied, or "the thread", and don't recommend who to ask; that is handled \
+separately.
 
 dm: a short, friendly Slack message from the asker to the recipient. Open by introducing the asker \
 in a few words using their role and team (for a new hire: "I'm Priya, new on Integrations"), then \
@@ -221,7 +223,8 @@ def drop_uncited(text: str) -> str:
     the caller attaches the top sources instead (the model forgot to cite rather than made it up)."""
     sentences = re.split(r"(?<=[.!?])\s+", text.strip())
     cited = [s for s in sentences if _MARKER.search(s)]
-    return " ".join(cited) if cited else text
+    out = " ".join(cited) if cited else text
+    return out if not out or out[-1] in ".!?)" else out + "."
 
 
 def cite_top_sources(answer: str, n_sources: int, n: int = 2) -> tuple[str, list[int]]:

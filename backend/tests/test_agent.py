@@ -201,3 +201,9 @@ def test_normalize_markers(raw, expected):
 def test_drop_uncited_keeps_fully_uncited_answers_for_the_caller():
     from agent.compose import drop_uncited
     assert drop_uncited("Open a hotfix PR. Ping #deploys.") == "Open a hotfix PR. Ping #deploys."
+
+
+def test_drop_uncited_ends_with_punctuation():
+    from agent.compose import drop_uncited
+    assert drop_uncited("IMAP syncs folders [1]. Recent fixes cover edge cases [3][4]") == \
+        "IMAP syncs folders [1]. Recent fixes cover edge cases [3][4]."
