@@ -107,3 +107,13 @@ def test_generation_is_deterministic():
     a, _ = generate(PEOPLE, SATURDAY)
     b, _ = generate(PEOPLE, SATURDAY)
     assert [(m.title, m.start) for m in a] == [(m.title, m.start) for m in b]
+
+
+def test_availability_includes_merged_busy_blocks(calendar):
+    meetings, _ = calendar
+    now = datetime.combine(demo_week(SATURDAY)[0], time(8), TZ)
+    res = availability(meetings, ["priya-shah", "marcus-lee"], open_reviews(PEOPLE), SATURDAY, now)
+    priya = [(b.start, b.end) for b in res.busy if b.person_id == "priya-shah"]
+    assert priya == merge(priya) and priya  # already merged, no overlaps
+    assert {b.person_id for b in res.busy} == {"priya-shah", "marcus-lee"}
+    assert not any(hasattr(b, "title") for b in res.busy)

@@ -207,3 +207,20 @@ def test_drop_uncited_ends_with_punctuation():
     from agent.compose import drop_uncited
     assert drop_uncited("IMAP syncs folders [1]. Recent fixes cover edge cases [3][4]") == \
         "IMAP syncs folders [1]. Recent fixes cover edge cases [3][4]."
+
+
+def test_context_line_links_sources():
+    from agent.actions import context_line
+    from schema import Citation
+    cites = [Citation(id="1", title="Sync message channels from webhooks (#26180)", url="https://gh/26180", source="github"),
+             Citation(id="2", title="#help: how does sync start?", url="/artifacts/seed-thread-0042", source="seed")]
+    line = context_line(cites)
+    assert line.startswith("\n\nContext: <https://gh/26180|Sync message channels")
+    assert "<http://localhost:3000/artifacts/seed-thread-0042|#help: how does sync start?>" in line
+    assert context_line([]) == ""
+
+
+def test_shorter_fallback():
+    from agent.actions import _shorter_fallback
+    assert _shorter_fallback("Hi Marcus, I'm Priya. Could we talk? I read #26180. Thanks!") == \
+        "Hi Marcus, I'm Priya. Could we talk?"

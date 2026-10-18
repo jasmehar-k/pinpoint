@@ -38,6 +38,7 @@ class Conversation:
     topic: str | None = None
     experts: list[Expert] = field(default_factory=list)
     contact: str | None = None  # who the last DM draft was for
+    citations: list[Citation] = field(default_factory=list)  # last answer's sources, attached to DMs
 
 
 CONVERSATIONS: dict[str, Conversation] = {}
@@ -149,8 +150,9 @@ def _question(conn, convo: Conversation, question: str, now: datetime, client) -
         if len(dm) < 40:
             dm = fallback_dm(asker, recipient, question, convo.topic)
         dm = tidy_dm(dm, recipient)
-        pending.append(actions.create(conn, "send_message", SendMessagePayload(to=recipient.id, text=dm), asker.id))
-        convo.contact = recipient.id
+        payload = SendMessagePayload(to=recipient.id, text=dm, context=a.citations[:3])
+        pending.append(actions.create(conn, "send_message", payload, asker.id))
+        convo.contact, convo.citations = recipient.id, a.citations
 
     return ChatResponse(conversation_id=convo.id,
                         reply=ChatReply(text=f"{a.text}\n\n{a.routing}", citations=a.citations),
@@ -186,7 +188,8 @@ def _redirect(conn, convo: Conversation, message: str) -> ChatResponse:
     target = named_expert(message, convo.experts)
     asker, recipient = people[convo.user], people[target.person_id]
     dm = fallback_dm(asker, recipient, convo.question, convo.topic)
-    action = actions.create(conn, "send_message", SendMessagePayload(to=recipient.id, text=dm), asker.id)
+    payload = SendMessagePayload(to=recipient.id, text=dm, context=convo.citations[:3])
+    action = actions.create(conn, "send_message", payload, asker.id)
     convo.contact = recipient.id
     busy = target.badge == "busy" and target.availability
     note = f" Heads up: {recipient.name.split()[0]} is {target.availability.booked_pct:.0%} booked this week." if busy else ""

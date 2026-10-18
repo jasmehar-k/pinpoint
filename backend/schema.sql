@@ -120,3 +120,9 @@ create table if not exists slack_replies (
 alter table slack_replies add column if not exists topic text;
 alter table slack_replies add column if not exists promoted_at timestamptz;  -- someone reacted ✅
 alter table slack_replies add column if not exists confirm_ts text;          -- our "saved" note
+
+-- Last time each source was ingested; /health reports the latest as synced_at
+create table if not exists sync_log (
+    source    text primary key,
+    synced_at timestamptz not null default now()
+);

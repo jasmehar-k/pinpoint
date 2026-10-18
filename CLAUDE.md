@@ -203,7 +203,7 @@ Twenty's CODEOWNERS only covers CI/config files, so ownership comes mostly from 
 - Store the top 3 evidence links per (person, topic).
 - `find_experts(query)`: embed the query, get the top 40 artifacts by similarity (20 was too few for prolific authors), keep those within 0.10 of the best match (otherwise dozens of loosely related PRs outvote the few threads that answer the question), aggregate the people on them by similarity x type weight x decay. The question's topic is the one most retrieved artifacts share (similarity-weighted); the evidence line uses that topic's `expertise` counts. Candidates who reviewed 10+ of the top expert's PRs in that topic get "Reviewed N of Dana's Messaging PRs". Code: `backend/graph/experts.py`, `backend/graph/scoring.py`.
 - Availability factor (0 to 1) from % of working hours booked this week + open review count. Final rank = expertise x availability. Compute availability only for the top 5 candidates.
-- Bus factor: per topic, count people above a score threshold. 1 = red, 2 = amber, 3+ = green.
+- Bus factor (`graph/view.py`, `GET /graph`): an expert on a topic scores at least 0.6 x that topic's top score (relative, because top scores range from ~7 on Deploys to ~350 on Frontend). 1 = red, 2 = amber, 3+ = green. Currently red: Messaging (Dana), Billing (Isabel), Metadata and Frontend (Victor).
 - Corrections ("I don't own this anymore", "ask X instead") write to `corrections` and down-weight or redirect that edge.
 
 ## Agent
@@ -237,7 +237,7 @@ Slack sends go out as the bot ("Pinpoint, on behalf of Priya"). Sending as the u
 
 ## Frontend
 
-**MVP and V1 are chat-only.** No graph view, no bus factor view. Don't build graph UI or graph-only backend (NetworkX layout, `/graph` route, bus factor) until it's pulled back into scope. The graph notes below are deferred, kept for later.
+Chat is the core. The graph and bus factor view are back in scope (Harshita is building them against `GET /graph`); no NetworkX needed, `/graph` returns people, topics and edges ready to draw.
 
 - Graph (deferred) shows **people and topic nodes only**. Artifacts appear on click, never as nodes (avoid the hairball). Person node size = score, color = team. Clicking a topic highlights its experts and dims everything else.
 - Graph modes: Experts / Bus factor.
@@ -264,7 +264,7 @@ Build the frontend against `/fixtures` JSON from hour 0. Swap to real endpoints 
 - Correction button
 - Per-user profile
 
-**Deferred (post-V1):** graph view with topic focus, bus factor view, graph ⇄ chat linking.
+**In progress:** graph view with topic focus and bus factor (`GET /graph`). **Later:** graph ⇄ chat linking, the floating bubble (`/experts?path=`, `context` on `ChatRequest`).
 
 **Stretch:** Notion/Confluence connector, Gmail fallback send, live Slack events, real Google Calendar for one account.
 

@@ -81,6 +81,7 @@ class Health(BaseModel):
     status: Literal["ok"]
     mode: Literal["seeded", "live"]
     db: bool
+    synced_at: datetime | None = None  # last time any artifact was ingested or updated
 
 
 class Citation(BaseModel):
@@ -129,16 +130,26 @@ class Slot(BaseModel):
     end: datetime
 
 
+class Busy(BaseModel):
+    """A busy stretch on someone's calendar (merged meetings, no titles), for the week grid."""
+
+    person_id: str
+    start: datetime
+    end: datetime
+
+
 class AvailabilityResponse(BaseModel):
     window_start: datetime
     window_end: datetime
     people: list[Availability]
     mutual_free_slots: list[Slot]
+    busy: list[Busy] = Field(default_factory=list)
 
 
 class SendMessagePayload(BaseModel):
     to: str
     text: str
+    context: list[Citation] = Field(default_factory=list)  # sources the DM is about, shown as chips
 
 
 class ScheduleMeetingPayload(BaseModel):
@@ -167,6 +178,12 @@ class ApproveRequest(BaseModel):
     (edited DM text, a different slot); omit it to execute the draft as is."""
 
     payload: SendMessagePayload | ScheduleMeetingPayload | None = None
+
+
+class RewriteRequest(BaseModel):
+    """Body of POST /actions/{id}/rewrite: redraft a pending DM."""
+
+    style: Literal["shorter"] = "shorter"
 
 
 class ChatRequest(BaseModel):
@@ -221,3 +238,36 @@ class UserProfile(BaseModel):
     person_id: str
     started_on: date
     interests: list[str] = Field(default_factory=list)
+
+
+# ---- GET /graph ----
+
+class GraphTopic(BaseModel):
+    id: str
+    name: str
+    experts: list[str]  # person ids at or above the threshold, best first
+    bus_factor: int  # len(experts): 1 = red, 2 = amber, 3+ = green
+    next_closest: str | None  # best person below the threshold
+
+
+class GraphPerson(BaseModel):
+    person_id: str
+    name: str
+    team: str
+    booked_pct: float = Field(ge=0, le=1)
+
+
+class GraphEdge(BaseModel):
+    person_id: str
+    topic_id: str
+    score: float
+    evidence_summary: str
+
+
+class GraphResponse(BaseModel):
+    # An expert scores at least `threshold` x the topic's top score. Relative, because scores
+    # differ by 50x between topics (Frontend vs Deploys).
+    threshold: float
+    topics: list[GraphTopic]
+    people: list[GraphPerson]
+    edges: list[GraphEdge]

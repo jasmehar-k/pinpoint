@@ -12,9 +12,10 @@ from artifacts import get_artifact
 from embeddings import embed_query
 from graph.availability import get_availability
 from graph.experts import apply_availability, find_experts
+from graph.view import build_graph
 from org import people_by_id
 from schema import (ApproveRequest, ArtifactResponse, AvailabilityResponse, ChatRequest, ChatResponse,
-                    ExpertsResponse, Health, PendingAction)
+                    ExpertsResponse, GraphResponse, Health, PendingAction, RewriteRequest)
 
 
 @asynccontextmanager
@@ -34,7 +35,11 @@ app.add_middleware(
 
 @app.get("/health", response_model=Health)
 def health() -> Health:
-    return Health(status="ok", mode=config.MODE, db=db.ping())
+    if not db.ping():
+        return Health(status="ok", mode=config.MODE, db=False)
+    with db.connect() as conn:
+        synced_at = conn.execute("select max(synced_at) from sync_log").fetchone()[0]
+    return Health(status="ok", mode=config.MODE, db=True, synced_at=synced_at)
 
 
 @app.get("/experts", response_model=ExpertsResponse)
@@ -92,3 +97,20 @@ def reject(action_id: str) -> PendingAction:
             return actions.reject(conn, action_id)
         except actions.ActionError as e:
             raise HTTPException(404, str(e))
+
+
+@app.post("/actions/{action_id}/rewrite", response_model=PendingAction)
+def rewrite(action_id: str, body: RewriteRequest | None = None) -> PendingAction:
+    with db.connect() as conn:
+        try:
+            return actions.rewrite(conn, action_id, (body or RewriteRequest()).style)
+        except actions.ActionError as e:
+            raise HTTPException(404, str(e))
+        except ValueError as e:
+            raise HTTPException(409, str(e))
+
+
+@app.get("/graph", response_model=GraphResponse)
+def graph() -> GraphResponse:
+    with db.connect() as conn:
+        return build_graph(conn, datetime.now(UTC))
