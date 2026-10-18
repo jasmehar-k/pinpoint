@@ -20,6 +20,23 @@ EVENT_WEIGHTS: dict[str, float] = {
 }
 
 
+class Artifact(BaseModel):
+    """A searchable thing (PR, thread). Connectors emit these alongside events, so content
+    by people outside people.json (bots, unmapped contributors) is still searchable."""
+
+    id: str
+    source: Source
+    kind: Literal["pr", "thread", "file", "answer"]
+    title: str | None = None
+    text: str
+    url: str
+    timestamp: datetime
+    paths: list[str] = Field(default_factory=list)
+    # Set by connectors that know topics directly (e.g. LLM-tagged Slack threads).
+    # Left empty, the loader derives topics from paths.
+    topics: list[str] = Field(default_factory=list)
+
+
 class Event(BaseModel):
     source: Source
     type: EventType

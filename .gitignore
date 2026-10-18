@@ -227,3 +227,6 @@ node_modules/
 next-env.d.ts
 *.tsbuildinfo
 .vercel
+
+# Raw API caches
+backend/data/
