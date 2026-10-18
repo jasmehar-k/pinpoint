@@ -29,7 +29,7 @@ export function Chat() {
   const nextId = useRef(0);
   const bottom = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { setTopic } = useGraphFocus();
+  const { setTopic, setPerson } = useGraphFocus();
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -60,6 +60,16 @@ export function Chat() {
     }
   }
 
+  // Clears the thread and starts a new conversation (old drafts stay pending in the backend).
+  function newChat() {
+    setMessages([]);
+    setInput("");
+    setConversationId(undefined);
+    setTopic(null);
+    setPerson(null);
+    inputRef.current?.focus();
+  }
+
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     ask(input);
@@ -67,8 +77,17 @@ export function Chat() {
 
   return (
     <section aria-label="Ask Pinpoint" className="flex min-h-0 flex-col rounded-xl border border-zinc-200 bg-white">
-      <header className="border-b border-zinc-100 px-5 py-4">
+      <header className="flex items-center justify-between border-b border-zinc-100 px-5 py-4">
         <h2 className="font-semibold">Ask Pinpoint</h2>
+        {messages.length > 0 && (
+          <button
+            onClick={newChat}
+            disabled={loading}
+            className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:text-zinc-400"
+          >
+            New chat
+          </button>
+        )}
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-4 px-4 py-5 sm:px-5">
@@ -95,7 +114,7 @@ export function Chat() {
             }}
             disabled={loading}
             rows={1}
-            placeholder={loading ? "Waiting for the answer…" : messages.length ? "Ask a follow-up" : "Ask how something works"}
+            placeholder={loading ? "Waiting for the answer…" : messages.length ? "Ask a follow-up or a new question" : "Ask how something works"}
             aria-label="Your question"
             className="max-h-40 min-h-11 flex-1 resize-none [field-sizing:content] rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-[15px] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:disabled:bg-zinc-800"
           />
