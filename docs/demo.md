@@ -30,8 +30,8 @@ About 3 minutes. Harshita drives the laptop as Priya Shah (new hire, Integration
 | 2 | Click citation chip **2** | Every claim links to its source: PR #26180 opens in a new tab. Come back to the chat tab. (Chip 1 is the #help thread where Dana explained it.) |
 | 3 | Scroll to the expert cards | Dana wrote most of this (128 Messaging PRs) but is 78% booked; Victor 84%. Marcus reviewed 38 of Dana's Messaging PRs and is 35% booked, so he's Recommended. |
 | 4 | Change a word in the draft (it opens "I'm Priya, new on Integrations"), click **Approve and send** | Nothing is sent until you approve. **Hold up the phone: the DM from Pinpoint, on behalf of Priya, has arrived.** |
-| 5 | Type **Can you book time with Marcus on Wednesday at 10:30am?** | It finds times you're both free. Wed 10:30 is preselected. |
-| 6 | Click **Book Wed 10:30 – 11:00 AM** | Booked and on both calendars. |
+| 5 | Type **Can you book time with Marcus on Wednesday at 10:30am?** | It shows both calendars for the week and three slots you're both free. Wed 10:30 is preselected. |
+| 6 | Click **Book Wed 10:30 AM** | Booked and on both calendars. |
 | 7 | Type **How are subscriptions and plan upgrades billed?** | Same pipeline, different expert: Isabel Moreno (60 Billing PRs, 34% booked) is Recommended. |
 | 8 | Close | "We only read public channels the bot is invited to, and anyone can opt out." |
 

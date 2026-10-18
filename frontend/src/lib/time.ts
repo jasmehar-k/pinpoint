@@ -63,3 +63,12 @@ export function weekdaysBetween(startIso: string, endIso: string): string[] {
   }
   return days;
 }
+
+const clockFmt = new Intl.DateTimeFormat("en-US", { timeZone: ORG_TZ, hourCycle: "h23", hour: "2-digit", minute: "2-digit" });
+
+// Minutes since Pacific midnight: 10:30 AM -> 630. For placing blocks on a day grid.
+export function minutesOfDay(iso: string): number {
+  const parts = clockFmt.formatToParts(new Date(iso));
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  return get("hour") * 60 + get("minute");
+}
