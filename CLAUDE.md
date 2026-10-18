@@ -49,6 +49,7 @@ uv run pytest                             # all tests
 uv run pytest tests/test_topics.py::test_known_paths   # one test
 uv run python -m scripts.init_db          # apply schema.sql (idempotent)
 uv run python -m scripts.load_people      # upsert people.json + topics
+uv run python -m scripts.ingest_slack [--days 90] [--channel help] [--no-tag] [--refresh]   # public channels the bot is in; see docs/slack-setup.md
 ```
 
 Pipeline steps go in `backend/scripts/` as `python -m scripts.<step>`.
