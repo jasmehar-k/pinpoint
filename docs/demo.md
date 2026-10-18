@@ -44,8 +44,8 @@ About 3½ minutes. Every beat shows the agent **doing** something, and the human
 | 10 | 3:00 | Close | "Pinpoint answers from evidence, routes around overload, and never acts without approval. It reads only public channels it's invited to, and its scores route questions; they never rate people. Slack and GitHub are live today; in a company, the org chart would come from the HR system, like Workday." |
 
 **Spare beats if there's time**
-- **How are subscriptions and plan upgrades billed?** Same pipeline, different expert: Isabel Moreno (60 Billing PRs, 34% booked) is Recommended.
-- Open http://localhost:3000/code: a code page with Pinpoint's bubble. "Who knows this file" shows Marcus and Dana without asking anything: help in context, where engineers already are.
+- **How are subscriptions and plan upgrades billed?** Same pipeline, different expert: Isabel Moreno (60 Billing PRs, about 34% booked) is Recommended.
+- **The code bubble:** open **localhost:3000/code**, click line **80**, shift-click line **84**, click **Ask Pinpoint about this**, type **Why does the cron skip channels with an active webhook?** "Pinpoint also lives where engineers already are. The bubble knows the file and the selected lines": it explains why active webhooks skip the cron (PR #26180, Dana's #help thread) and recommends Marcus. Then click **Show in graph**: the graph opens on Messaging with the same chat beside it. This question isn't cached, so it takes 20 to 30 seconds; start it while talking.
 - **whats pr 28080**: it pulls that exact PR, explains it, and recommends the author (Isabel) and a reviewer (Lena).
 
 ## What judges should see, beat by beat

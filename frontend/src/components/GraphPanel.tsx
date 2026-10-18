@@ -6,9 +6,9 @@ import { getGraph } from "@/lib/api";
 import { firstName } from "@/lib/people";
 import type { GraphEdge, GraphPerson, GraphResponse, GraphTopic } from "@/lib/types";
 
-import { useGraphFocus } from "./graphFocus";
+import { useGraphFocus, type GraphMode } from "./graphFocus";
 
-type Mode = "experts" | "bus";
+type Mode = GraphMode;
 
 // Team colours match the expert card avatars.
 const TEAM_FILL: Record<string, string> = {
@@ -37,9 +37,8 @@ const pillWidth = (name: string, withCount: boolean) => short(name).length * 7.4
 export function GraphPanel() {
   const [graph, setGraph] = useState<GraphResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<Mode>("experts");
   const [attempt, setAttempt] = useState(0);
-  const { topic, setTopic } = useGraphFocus();
+  const { topic, setTopic, mode, setMode } = useGraphFocus(); // mode is shared so the palette can switch it
 
   useEffect(() => {
     let live = true;
