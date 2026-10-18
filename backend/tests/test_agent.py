@@ -70,7 +70,8 @@ def test_pick_slot():
     assert pick_slot(slots, "wednesday 10:30am") == (slots[2], True)
     assert pick_slot(slots, "wed afternoon") == (slots[3], True)
     assert pick_slot(slots, "wednesday at 11am") == (slots[2], False)  # nearest that day
-    assert pick_slot(slots, "whenever works") == (slots[0], False)
+    assert pick_slot(slots, "whenever works") == (slots[1], False)  # not 9:00, the first one from 10 AM
+    assert pick_slot(_slots((0, 9, 0)), "whenever") == (_slots((0, 9, 0))[0], False)  # only option left
     assert pick_slot([], "wed") == (None, False)
 
 

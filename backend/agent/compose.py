@@ -64,6 +64,9 @@ def slot_preference(message: str) -> tuple[int | None, time | None, str | None]:
     return day, at, part
 
 
+GOOD_HOURS = (time(10), time(16))  # default suggestions start between 10 AM and 4 PM
+
+
 def pick_slot(slots: list[Slot], message: str) -> tuple[Slot | None, bool]:
     """Best slot for the request, and whether it matches what was asked for exactly."""
     if not slots:
@@ -82,6 +85,11 @@ def pick_slot(slots: list[Slot], message: str) -> tuple[Slot | None, bool]:
         if part == "morning" and t.hour >= 12 or part == "afternoon" and t.hour < 12:
             return False
         return True
+
+    if day is None and at is None and part is None:
+        # No preference: the earliest slot in the middle of the day, not 9:00 right before standup
+        good = [s for s in slots if GOOD_HOURS[0] <= local(s).time() <= GOOD_HOURS[1]]
+        return (good or slots)[0], False
 
     exact = [s for s in slots if ok(s)]
     if exact:
