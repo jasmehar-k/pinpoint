@@ -4,8 +4,8 @@ import pytest
 
 import config
 from org import people_by_id
-from schema import (ArtifactResponse, AvailabilityResponse, ChatResponse, ExpertsResponse, GraphResponse,
-                    Health, PendingAction)
+from schema import (ArtifactResponse, AvailabilityResponse, ChatResponse, Correction, ExpertsResponse,
+                    GraphResponse, Health, PendingAction)
 
 FIXTURES = {
     "health.json": Health,
@@ -17,6 +17,7 @@ FIXTURES = {
     "action_approve_meeting.json": PendingAction,
     "artifact.json": ArtifactResponse,
     "graph.json": GraphResponse,
+    "correction.json": Correction,
 }
 
 

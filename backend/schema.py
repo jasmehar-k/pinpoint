@@ -271,3 +271,26 @@ class GraphResponse(BaseModel):
     topics: list[GraphTopic]
     people: list[GraphPerson]
     edges: list[GraphEdge]
+
+
+# ---- POST /corrections ----
+
+class CorrectionRequest(BaseModel):
+    """"Not the right person?" on an expert card. not_owner demotes the expert on this topic;
+    redirect also points to someone else ("ask X instead")."""
+
+    expert_id: str
+    topic_id: str
+    reported_by: str
+    kind: Literal["not_owner", "redirect"] = "not_owner"
+    redirect_to: str | None = None
+    note: str | None = None
+
+
+class Correction(BaseModel):
+    id: int
+    expert_id: str
+    topic_id: str
+    kind: Literal["not_owner", "redirect"]
+    redirect_to: str | None = None
+    created_at: datetime

@@ -15,7 +15,7 @@ from datetime import UTC, datetime
 
 import llm
 from agent import actions
-from agent.compose import (SYSTEM, build_prompt, cite_mentioned_prs, cite_top_sources, drop_uncited, normalize_markers, drop_unlisted_people, fallback_answer, fallback_dm,
+from agent.compose import (NOT_FOUND, SYSTEM, build_prompt, cite_mentioned_prs, cite_top_sources, drop_uncited, normalize_markers, drop_unlisted_people, fallback_answer, fallback_dm,
                            intent, named_expert, parse_reply, pick_slot, renumber_citations,
                            routing_text, slot_label, slot_preference, tidy_dm)
 from graph.availability import get_availability
@@ -23,7 +23,7 @@ from graph.experts import apply_availability, find_experts, topic_label
 from org import load_org, people_by_id
 from schema import (ChatReply, ChatRequest, ChatResponse, Citation, Expert, Person, ScheduleMeetingPayload,
                     SendMessagePayload)
-from search import Hit, search_artifacts
+from search import Hit, mentioned_prs, search_artifacts
 
 ANSWER_SOURCES = 6
 MAX_THREAD_SOURCES = 3  # keep real PRs in every answer; threads are discussion, PRs are ground truth
@@ -111,7 +111,10 @@ def answer_question(conn, question: str, asker: Person, now: datetime, client=No
                     exclude: tuple[str, ...] = ()) -> Answered:
     """`exclude`: artifacts not to use, e.g. the Slack thread being answered (no self-citation)."""
     people = people_by_id()
-    hits = answer_sources(search_artifacts(conn, question, k=ANSWER_SOURCES * 3, exclude=exclude))
+    named = [h for h in mentioned_prs(conn, question) if h.id not in exclude]
+    found = [h for h in search_artifacts(conn, question, k=ANSWER_SOURCES * 3, exclude=exclude)
+             if h.id not in {n.id for n in named}]
+    hits = answer_sources(named + found)
     experts = find_experts(conn, question, asker_id=asker.id, now=now, exclude=exclude)
     if experts:
         avail = get_availability(conn, [e.person_id for e in experts], now)
@@ -129,7 +132,7 @@ def answer_question(conn, question: str, asker: Person, now: datetime, client=No
         answer = drop_uncited(answer)
         if not answer:
             answer, order = fallback_answer(hits)
-        elif not order and hits:
+        elif not order and hits and not answer.startswith(NOT_FOUND[:20]):
             answer, order = cite_top_sources(answer, len(hits))
     else:
         answer, order = fallback_answer(hits)

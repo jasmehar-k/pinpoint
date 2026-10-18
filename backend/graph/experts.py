@@ -6,19 +6,20 @@ share; the evidence line comes from that topic's expertise row.
 """
 
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 
 from graph.scoring import EventRow, contribution
 from org import people_by_id
 from schema import Evidence, Expert
-from search import Hit, search_artifacts
-from topics import TOPICS
+from search import Hit, mentioned_prs, search_artifacts
+from topics import TOPICS, topic_for_path
 
 TOP_ARTIFACTS = 40
 # Only credit artifacts close to the best match. Without this, 30 loosely related PRs outvote the
 # 5 threads that actually answer the question (ops questions routed to the Head of Eng).
 RELATIVE_CUTOFF = 0.10
+NAMED_PR_WEIGHT = 5.0  # "what's PR 28080?": that PR counts 5x a top search match
 MAX_EXPERTS = 5
 # Mention "reviewed N of <top expert>'s PRs" only when it's a real pattern
 REVIEWED_OF_MIN = 10
@@ -40,6 +41,16 @@ class Candidate:
             if len(out) == n:
                 break
         return out
+
+
+def named_topic(paths: list[str]) -> str | None:
+    """The topic a named PR touches most, by changed files. Frontend is the catch-all, so a
+    specific topic wins whenever the PR has one."""
+    counts = Counter(t for p in paths if (t := topic_for_path(p)))
+    specific = [(n, t) for t, n in counts.items() if t != "frontend"]
+    if specific:
+        return max(specific)[1]
+    return "frontend" if counts else None
 
 
 def dominant_topic(hits: list[Hit]) -> str | None:
@@ -67,6 +78,26 @@ def rank_candidates(hits: list[Hit], events: list[EventRow], now: datetime,
 def relevant(hits: list[Hit], cutoff: float = RELATIVE_CUTOFF) -> list[Hit]:
     """Hits within `cutoff` similarity of the best one (hits come sorted best first)."""
     return [h for h in hits if h.similarity >= hits[0].similarity - cutoff] if hits else []
+
+
+CORRECTION_FACTOR = 0.5  # each "not the right person" halves that person's score on the topic
+
+
+def apply_corrections(ranked: list[Candidate], corrections: list[tuple[str, str, str | None]],
+                      not_experts: set[str] = frozenset()) -> list[Candidate]:
+    """corrections: (expert_id, kind, redirect_to) for the question's topic. Every correction
+    demotes the expert; a redirect also puts redirect_to in the list with at least the demoted
+    expert's original score."""
+    by_id = {c.person_id: c for c in ranked}
+    original = {pid: c.score for pid, c in by_id.items()}
+    for expert_id, kind, redirect_to in corrections:
+        if expert_id in by_id:
+            by_id[expert_id].score *= CORRECTION_FACTOR
+        if kind == "redirect" and redirect_to and redirect_to not in not_experts:
+            floor = original.get(expert_id, 0.0)
+            target = by_id.get(redirect_to) or by_id.setdefault(redirect_to, Candidate(redirect_to))
+            target.score = max(target.score, floor)
+    return sorted(by_id.values(), key=lambda c: -c.score)
 
 
 def topic_label(topic_id: str) -> str:
@@ -131,6 +162,17 @@ def _last_active(conn, person_ids: list[str]) -> dict[str, datetime]:
     return dict(rows)
 
 
+def _paths(conn, artifact_id: str) -> list[str]:
+    row = conn.execute("select paths from events where artifact_id = %s and paths <> '{}' limit 1",
+                       (artifact_id,)).fetchone()
+    return row[0] if row else []
+
+
+def _corrections(conn, topic_id: str) -> list[tuple[str, str, str | None]]:
+    return conn.execute("select expert_id, kind, redirect_to from corrections where topic_id = %s",
+                        (topic_id,)).fetchall()
+
+
 def _reviewed_of(conn, author_id: str, reviewer_ids: list[str], topic_id: str) -> dict[str, int]:
     """How many of the author's PRs in this topic each reviewer reviewed."""
     rows = conn.execute(
@@ -151,13 +193,19 @@ def find_experts(conn, query: str, asker_id: str | None = None, now: datetime | 
                  limit: int = MAX_EXPERTS, exclude: tuple[str, ...] = ()) -> list[Expert]:
     now = now or datetime.now(UTC)
     people = people_by_id()
-    hits = relevant(search_artifacts(conn, query, k=TOP_ARTIFACTS, exclude=exclude))
+    # A PR the question names outweighs everything search found: its author and reviewers are who to ask
+    named = [replace(h, similarity=NAMED_PR_WEIGHT) for h in mentioned_prs(conn, query) if h.id not in exclude]
+    hits = named + [h for h in relevant(search_artifacts(conn, query, k=TOP_ARTIFACTS, exclude=exclude))
+                    if h.id not in {n.id for n in named}]
     not_experts = {asker_id} if asker_id else set()
-    ranked = rank_candidates(hits, _events_on(conn, [h.id for h in hits]), now, not_experts)[:limit]
+    topic = (named_topic(_paths(conn, named[0].id)) if named else None) or dominant_topic(hits)
+    ranked = rank_candidates(hits, _events_on(conn, [h.id for h in hits]), now, not_experts)
+    if topic:
+        ranked = apply_corrections(ranked, _corrections(conn, topic), not_experts)
+    ranked = ranked[:limit]
     if not ranked:
         return []
 
-    topic = dominant_topic(hits)
     ids = [c.person_id for c in ranked]
     counts = _edge_counts(conn, ids, topic)
     active = _last_active(conn, ids)

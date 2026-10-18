@@ -180,3 +180,23 @@ export interface GraphResponse {
   people: GraphPerson[];
   edges: GraphEdge[];
 }
+
+// ---- POST /corrections ----
+
+export interface CorrectionRequest {
+  expert_id: string;
+  topic_id: string;
+  reported_by: string;
+  kind?: "not_owner" | "redirect";
+  redirect_to?: string;
+  note?: string;
+}
+
+export interface Correction {
+  id: number;
+  expert_id: string;
+  topic_id: string;
+  kind: "not_owner" | "redirect";
+  redirect_to: string | null;
+  created_at: string;
+}

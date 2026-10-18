@@ -100,6 +100,8 @@ def slot_label(slot: Slot) -> str:
 
 # ---- LLM output ----
 
+NOT_FOUND = "I couldn't find anything about that in the team's PRs and threads."
+
 SYSTEM = """You help a new engineer understand a codebase, using only the numbered sources given \
 (merged PRs and Slack threads from the team).
 
@@ -111,7 +113,8 @@ note"). Every sentence must end with at least one source number in square bracke
 mention a PR number, cite the source that is that PR. PR sources are merged code changes and are \
 the most reliable; THREAD sources are team discussions. Base the answer on PRs where they cover the \
 question, and never name a class, function, file or event that isn't written in a source. If the \
-sources don't answer it, say so in one sentence. The only people you may name are the ones listed \
+sources don't answer it, reply with exactly: "I couldn't find anything about that in the team's PRs \
+and threads." Never mention "sources", "provided" or "context" in the answer. The only people you may name are the ones listed \
 under "People who know this"; never name anyone else. If the question asks who to talk to, answer \
 it with those people and what they did, citing the sources that show it.
 

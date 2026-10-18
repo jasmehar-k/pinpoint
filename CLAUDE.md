@@ -205,7 +205,8 @@ Twenty's CODEOWNERS only covers CI/config files, so ownership comes mostly from 
 - `find_experts(query)`: embed the query, get the top 40 artifacts by similarity (20 was too few for prolific authors), keep those within 0.10 of the best match (otherwise dozens of loosely related PRs outvote the few threads that answer the question), aggregate the people on them by similarity x type weight x decay. The question's topic is the one most retrieved artifacts share (similarity-weighted); the evidence line uses that topic's `expertise` counts. Candidates who reviewed 10+ of the top expert's PRs in that topic get "Reviewed N of Dana's Messaging PRs". Code: `backend/graph/experts.py`, `backend/graph/scoring.py`.
 - Availability factor (0 to 1) from % of working hours booked this week + open review count. Final rank = expertise x availability. Compute availability only for the top 5 candidates.
 - Bus factor (`graph/view.py`, `GET /graph`): an expert on a topic scores at least 0.6 x that topic's top score (relative, because top scores range from ~7 on Deploys to ~350 on Frontend). 1 = red, 2 = amber, 3+ = green. Currently red: Messaging (Dana), Billing (Isabel), Metadata and Frontend (Victor).
-- Corrections ("I don't own this anymore", "ask X instead") write to `corrections` and down-weight or redirect that edge.
+- Corrections (`POST /corrections`, the "Not the right person?" link): each one halves that expert's score on that topic in `find_experts` for everyone; a `redirect` also puts `redirect_to` in the list with the demoted expert's original score (`apply_corrections`). `reset_demo` clears them.
+- A question naming a PR ("what's PR 28080", "#26180") pulls that PR in as the top source and counts it 5x when ranking experts, so its author and reviewers come first; the question's topic is the one the PR's changed files touch most (`mentioned_prs`, `named_topic`).
 
 ## Agent
 

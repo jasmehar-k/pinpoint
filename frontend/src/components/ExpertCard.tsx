@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 
+import { addCorrection } from "@/lib/api";
+import { DEMO_USER } from "@/lib/demo";
+import { firstName } from "@/lib/people";
 import { timeAgo } from "@/lib/time";
 import { displayTitle } from "@/lib/titles";
 import type { Availability, EventType, Expert } from "@/lib/types";
@@ -133,7 +136,7 @@ export function ExpertCard({ expert, compact = false, onDraft, onBook, disabled 
 // "Show evidence" toggle on the left, "Not the right person?" on the right; evidence opens below.
 function Footer({ expert }: { expert: Expert }) {
   const [showEvidence, setShowEvidence] = useState(false);
-  const [corrected, setCorrected] = useState(false);
+  const [corrected, setCorrected] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const hasEvidence = expert.evidence.length > 0;
   return (
     <>
@@ -145,12 +148,25 @@ function Footer({ expert }: { expert: Expert }) {
         ) : (
           <span />
         )}
-        {/* Corrections aren't wired to the backend yet, so this only acknowledges. */}
-        {corrected ? (
-          <span className="text-zinc-500">Thanks. We&apos;ll use this to improve who we suggest for this topic.</span>
+        {expert.topic === "other" ? (
+          <span />
+        ) : corrected === "saved" ? (
+          <span className="text-zinc-500">Thanks. We&apos;ll suggest {firstName(expert.person_id)} less for this topic.</span>
         ) : (
-          <button onClick={() => setCorrected(true)} className="text-blue-700 underline hover:text-blue-900">
-            Not the right person?
+          <button
+            onClick={async () => {
+              setCorrected("saving");
+              try {
+                await addCorrection({ expert_id: expert.person_id, topic_id: expert.topic, reported_by: DEMO_USER.id });
+                setCorrected("saved");
+              } catch {
+                setCorrected("failed");
+              }
+            }}
+            disabled={corrected === "saving"}
+            className="text-blue-700 underline hover:text-blue-900 disabled:text-zinc-400"
+          >
+            {corrected === "failed" ? "Couldn't save that. Try again?" : "Not the right person?"}
           </button>
         )}
       </div>

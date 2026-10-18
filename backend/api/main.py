@@ -14,8 +14,9 @@ from graph.availability import get_availability
 from graph.experts import apply_availability, find_experts
 from graph.view import build_graph
 from org import people_by_id
-from schema import (ApproveRequest, ArtifactResponse, AvailabilityResponse, ChatRequest, ChatResponse,
-                    ExpertsResponse, GraphResponse, Health, PendingAction, RewriteRequest)
+from topics import TOPICS
+from schema import (ApproveRequest, ArtifactResponse, AvailabilityResponse, ChatRequest, ChatResponse, Correction,
+                    CorrectionRequest, ExpertsResponse, GraphResponse, Health, PendingAction, RewriteRequest)
 
 
 @asynccontextmanager
@@ -114,3 +115,26 @@ def rewrite(action_id: str, body: RewriteRequest | None = None) -> PendingAction
 def graph() -> GraphResponse:
     with db.connect() as conn:
         return build_graph(conn, datetime.now(UTC))
+
+
+@app.post("/corrections", response_model=Correction)
+def correct(req: CorrectionRequest) -> Correction:
+    """"Not the right person?": demotes the expert on this topic for everyone's future searches."""
+    people = people_by_id()
+    if req.expert_id not in people or req.reported_by not in people:
+        raise HTTPException(422, "We don't recognize this person.")
+    if req.kind == "redirect" and req.redirect_to not in people:
+        raise HTTPException(422, "Pick who to ask instead.")
+    if req.topic_id not in TOPICS:
+        raise HTTPException(422, "We don't recognize this topic.")
+    with db.connect() as conn:
+        row = conn.execute(
+            """
+            insert into corrections (expert_id, topic_id, kind, redirect_to, reported_by, note)
+            values (%s, %s, %s, %s, %s, %s)
+            returning id, expert_id, topic_id, kind, redirect_to, created_at
+            """,
+            (req.expert_id, req.topic_id, req.kind, req.redirect_to if req.kind == "redirect" else None,
+             req.reported_by, req.note),
+        ).fetchone()
+    return Correction(id=row[0], expert_id=row[1], topic_id=row[2], kind=row[3], redirect_to=row[4], created_at=row[5])

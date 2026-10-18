@@ -138,3 +138,31 @@ def test_bus_factor():
     assert bus_factor([("a", 10), ("b", 9), ("c", 8)]) == (["a", "b", "c"], None)
     assert bus_factor([("a", 0.5)]) == ([], "a")  # nobody above the minimum score
     assert bus_factor([]) == ([], None)
+
+
+def test_corrections_demote_and_redirect():
+    from graph.experts import apply_corrections
+
+    def cands():
+        return [Candidate("dana", 9.0), Candidate("marcus", 5.0), Candidate("ken", 1.0)]
+
+    once = apply_corrections(cands(), [("dana", "not_owner", None)])
+    assert [(c.person_id, c.score) for c in once] == [("marcus", 5.0), ("dana", 4.5), ("ken", 1.0)]
+    twice = apply_corrections(cands(), [("dana", "not_owner", None)] * 2)
+    assert twice[0].person_id == "marcus" and twice[1].score == 2.25
+    redirected = apply_corrections(cands(), [("dana", "redirect", "ken")])
+    assert [c.person_id for c in redirected] == ["ken", "marcus", "dana"] and redirected[0].score == 9.0
+    new_person = apply_corrections(cands(), [("dana", "redirect", "lena")])
+    assert new_person[0].person_id == "lena"
+    assert all(c.person_id != "priya" for c in apply_corrections(cands(), [("dana", "redirect", "priya")], {"priya"}))
+    assert apply_corrections(cands(), [("nobody", "not_owner", None)])[0].person_id == "dana"
+
+
+def test_named_topic_uses_the_files_a_pr_touches():
+    from graph.experts import named_topic
+    S, F = "packages/twenty-server/src/", "packages/twenty-front/src/modules/"
+    billing_pr = [S + "engine/core-modules/billing/a.ts", S + "engine/core-modules/billing/b.ts",
+                  S + "engine/core-modules/auth/c.ts", F + "ui/x.tsx", F + "ui/y.tsx", F + "ui/z.tsx"]
+    assert named_topic(billing_pr) == "billing"  # most files among specific topics; frontend is the catch-all
+    assert named_topic([F + "ui/x.tsx"]) == "frontend"
+    assert named_topic(["README.md"]) is None

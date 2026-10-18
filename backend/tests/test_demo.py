@@ -261,3 +261,29 @@ def test_search_can_leave_out_an_artifact(conn):
     top = search_artifacts(conn, "How does inbound email sync work?", k=3)
     rest = search_artifacts(conn, "How does inbound email sync work?", k=3, exclude=(top[0].id,))
     assert top[0].id not in {h.id for h in rest} and rest[0].id == top[1].id
+
+
+def test_correction_demotes_the_expert_on_that_topic(conn):
+    before = _ranked_ids(conn, "How does inbound email sync work?")
+    assert before[0] == "dana-okafor"
+    row = conn.execute("insert into corrections (expert_id, topic_id, kind, reported_by) "
+                       "values ('dana-okafor', 'messaging', 'not_owner', 'priya-shah') returning id").fetchone()
+    conn.commit()
+    try:
+        after = _ranked_ids(conn, "How does inbound email sync work?")
+        assert after[0] != "dana-okafor" and "dana-okafor" in after
+        assert _ranked_ids(conn, "How are subscriptions and plan upgrades billed?")[0] == "isabel-moreno"  # other topics untouched
+    finally:
+        conn.execute("delete from corrections where id = %s", (row[0],))
+        conn.commit()
+
+
+def test_named_pr_is_the_top_source(conn):
+    from search import mentioned_prs
+    assert [h.id for h in mentioned_prs(conn, "whats pr 28080")] == ["github:pr:28080"]
+    assert [h.id for h in mentioned_prs(conn, "compare #26180 and PR #26181")] == ["github:pr:26180", "github:pr:26181"]
+    assert mentioned_prs(conn, "PR 1") == [] and mentioned_prs(conn, "how does sync work?") == []
+    # the people on the PR are the experts to ask about it
+    author = conn.execute("select person_id from events where artifact_id = 'github:pr:28080' and type = 'authored'").fetchone()
+    if author:
+        assert author[0] in _ranked_ids(conn, "whats pr 28080")[:3]

@@ -6,6 +6,8 @@ import type {
   ArtifactResponse,
   ChatRequest,
   ChatResponse,
+  Correction,
+  CorrectionRequest,
   ExpertsResponse,
   Health,
   PendingAction,
@@ -105,4 +107,10 @@ export function rejectAction(action: PendingAction): Promise<PendingAction> {
 export function getArtifact(id: string): Promise<ArtifactResponse> {
   // Fixture mode has one example artifact; every id gets it
   return USE_FIXTURES ? fixture("artifact.json") : call(`/artifacts/${encodeURIComponent(id)}`);
+}
+
+// "Not the right person?": demotes the expert on that topic in future searches.
+export function addCorrection(req: CorrectionRequest): Promise<Correction> {
+  if (USE_FIXTURES) return fixture("correction.json");
+  return call("/corrections", { method: "POST", body: JSON.stringify(req) });
 }
