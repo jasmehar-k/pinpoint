@@ -28,6 +28,7 @@ export function DmApproveCard({ action }: { action: DmAction }) {
 
   return (
     <CardShell
+      id={`action-${action.id}`}
       label={`Message to ${nameFromId(to)}`}
       title={`Message to ${nameFromId(to)}`}
       aside={`Slack DM from Pinpoint, on behalf of ${DEMO_USER.name.split(" ")[0]}`}

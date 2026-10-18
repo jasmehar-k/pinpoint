@@ -46,6 +46,7 @@ export function MeetingApproveCard({ action, availability }: { action: MeetingAc
 
   return (
     <CardShell
+      id={`action-${action.id}`}
       label={`Meeting: ${title}`}
       title={title}
       aside="30 min · times in Pacific"
