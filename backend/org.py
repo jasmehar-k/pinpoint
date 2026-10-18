@@ -17,7 +17,7 @@ def validate_org(org: Org) -> None:
     dupes = {i for i in ids if ids.count(i) > 1}
     if dupes:
         raise ValueError(f"duplicate person ids: {sorted(dupes)}")
-    for field in ("github_login", "slack_handle"):
+    for field in ("github_login", "slack_handle", "slack_user_id"):
         values = [getattr(p, field) for p in org.people if getattr(p, field)]
         if len(values) != len(set(values)):
             raise ValueError(f"duplicate {field} in people.json")
@@ -32,6 +32,11 @@ def validate_org(org: Org) -> None:
 @cache
 def people_by_github_login() -> dict[str, Person]:
     return {p.github_login.lower(): p for p in load_org().people if p.github_login}
+
+
+@cache
+def people_by_slack_user_id() -> dict[str, Person]:
+    return {p.slack_user_id: p for p in load_org().people if p.slack_user_id}
 
 
 @cache

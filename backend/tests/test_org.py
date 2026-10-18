@@ -33,6 +33,15 @@ def test_rejects_unknown_manager():
         validate_org(_org(manager="ghost"))
 
 
+def test_rejects_duplicate_slack_user_id():
+    person = {"name": "A", "team": "T", "role": "r", "manager": None, "github_login": None,
+              "slack_user_id": "U1"}
+    org = Org(teams=["T"], people=[{**person, "id": "a", "slack_handle": "a"},
+                                   {**person, "id": "b", "slack_handle": "b"}])
+    with pytest.raises(ValueError, match="duplicate slack_user_id"):
+        validate_org(org)
+
+
 def test_rejects_unknown_team():
     with pytest.raises(ValueError, match="unknown team"):
         validate_org(_org(team="Nope"))
