@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { displayTitle } from "@/lib/titles";
 import type { Citation } from "@/lib/types";
 
 // Seeded threads link to /artifacts/{id} in this app; everything else is external.
@@ -62,7 +63,7 @@ export function SourceList({ citations }: { citations: Citation[] }) {
         <li key={c.id} className="flex min-w-0 items-baseline gap-2">
           <span className={chip}>{c.id}</span>
           <SourceLink url={c.url} title={c.title} className="line-clamp-2 min-w-0 text-zinc-700 hover:underline dark:text-zinc-300">
-            {c.title}
+            {displayTitle(c.title)}
           </SourceLink>
           <span className="shrink-0 text-xs text-zinc-500">{SOURCE_LABEL[c.source]}</span>
         </li>

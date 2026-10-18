@@ -141,13 +141,20 @@ function MessageView({ message, onRetry }: { message: Message; onRetry: (q: stri
   );
 }
 
-// Real answers can take 15s+, so show that something is happening and for how long.
+// Uncached answers take ~30s on the free model, so show that something is happening. Past
+// SLOW_AFTER seconds a ticking counter stops reassuring anyone, so it gives way to a softer line.
+const SLOW_AFTER = 30;
+
 function Thinking() {
-  const [seconds, setSeconds] = useState(0);
+  // Elapsed time from a start stamp, not a tick count: browsers slow timers in background
+  // tabs (e.g. while a cited PR is open), and a tick count would fall behind.
+  const [start] = useState(() => Date.now());
+  const [now, setNow] = useState(start);
   useEffect(() => {
-    const t = setInterval(() => setSeconds((s) => s + 1), 1000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+  const seconds = Math.floor((now - start) / 1000);
   return (
     <div role="status" className="flex items-center gap-3 text-sm text-zinc-500">
       <span className="flex gap-1">
@@ -155,7 +162,9 @@ function Thinking() {
           <span key={d} className="size-1.5 animate-bounce rounded-full bg-zinc-400" style={{ animationDelay: `${d}ms` }} />
         ))}
       </span>
-      Searching PRs and Slack threads{seconds >= 3 ? ` · ${seconds}s` : "…"}
+      {seconds >= SLOW_AFTER
+        ? "Still digging through PRs and threads…"
+        : `Searching PRs and Slack threads${seconds >= 3 ? ` · ${seconds}s` : "…"}`}
     </div>
   );
 }

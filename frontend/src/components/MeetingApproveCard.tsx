@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { firstName, nameFromId } from "@/lib/people";
-import { dayKey, formatDay, formatSlot, weekdaysBetween } from "@/lib/time";
+import { dayKey, formatDay, formatSlot, formatTime, weekdaysBetween } from "@/lib/time";
 import type { AvailabilityResponse, PendingAction, ScheduleMeetingPayload, Slot } from "@/lib/types";
 
 import { ActionButtons, CardShell } from "./ActionCard";
@@ -121,8 +121,10 @@ function WeekView({
                     onClick={() => onSelect(s)}
                     disabled={disabled || isTaken}
                     aria-pressed={isSelected}
+                    // Every slot is 30 min, so the button shows the start; the name keeps the range.
+                    aria-label={`${formatSlot(s)}${isTaken ? " (taken)" : ""}`}
                     title={isTaken ? "No longer free" : undefined}
-                    className={`relative rounded-md border px-2 py-1.5 text-xs font-medium whitespace-nowrap disabled:cursor-not-allowed ${
+                    className={`rounded-md border px-2 py-1.5 text-xs font-medium whitespace-nowrap disabled:cursor-not-allowed ${
                       isTaken
                         ? "border-zinc-200 text-zinc-400 line-through dark:border-zinc-800"
                         : isSelected
@@ -130,8 +132,7 @@ function WeekView({
                           : "border-zinc-300 text-zinc-700 hover:border-blue-400 hover:bg-blue-50 disabled:hover:bg-transparent dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
                     }`}
                   >
-                    {formatSlot(s)}
-                    {isTaken && <span className="sr-only"> (taken)</span>}
+                    {formatTime(s.start)}
                   </button>
                 );
               })}
