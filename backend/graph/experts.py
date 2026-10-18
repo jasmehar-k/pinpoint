@@ -169,3 +169,28 @@ def find_experts(conn, query: str, asker_id: str | None = None, now: datetime | 
             evidence=c.top_evidence(), same_team=p.team == asker_team,
         ))
     return experts
+
+
+# ---- availability ----
+
+BUSY_AT = 0.70
+SAME_TEAM_BOOST = 1.1  # "prefer your own team when scores are close"
+
+
+def apply_availability(experts: list[Expert], people: list) -> list[Expert]:
+    """Final rank = expertise x availability factor (x 1.1 for the asker's team).
+    Badges: busy at 70%+ booked; the best-ranked expert who isn't busy is recommended."""
+    by_id = {a.person_id: a for a in people}
+    out = []
+    for e in experts:
+        a = by_id.get(e.person_id)
+        f = a.factor if a else 1.0
+        rank = e.expertise * f * (SAME_TEAM_BOOST if e.same_team else 1.0)
+        badge = "busy" if a and a.booked_pct >= BUSY_AT else None
+        out.append(e.model_copy(update={"availability": a, "rank_score": round(rank, 2), "badge": badge}))
+    out.sort(key=lambda e: -e.rank_score)
+    for e in out:
+        if e.badge is None:
+            e.badge = "recommended"
+            break
+    return out

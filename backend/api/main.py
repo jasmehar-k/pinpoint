@@ -1,13 +1,16 @@
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 import config
 import db
+from artifacts import get_artifact
 from embeddings import embed_query
-from graph.experts import find_experts
-from schema import ExpertsResponse, Health
+from graph.availability import get_availability
+from graph.experts import apply_availability, find_experts
+from schema import ArtifactResponse, AvailabilityResponse, ExpertsResponse, Health
 
 
 @asynccontextmanager
@@ -33,4 +36,26 @@ def health() -> Health:
 @app.get("/experts", response_model=ExpertsResponse)
 def experts(q: str = Query(min_length=2), user: str | None = None) -> ExpertsResponse:
     with db.connect() as conn:
-        return ExpertsResponse(query=q, experts=find_experts(conn, q, asker_id=user))
+        experts = find_experts(conn, q, asker_id=user)
+        if experts:
+            avail = get_availability(conn, [e.person_id for e in experts], datetime.now(UTC))
+            experts = apply_availability(experts, avail.people)
+        return ExpertsResponse(query=q, experts=experts)
+
+
+@app.get("/availability", response_model=AvailabilityResponse)
+def availability(people: str = Query(description="comma-separated person ids")) -> AvailabilityResponse:
+    ids = [p for p in people.split(",") if p]
+    if not ids:
+        raise HTTPException(422, "people is empty")
+    with db.connect(vector=False) as conn:
+        return get_availability(conn, ids, datetime.now(UTC))
+
+
+@app.get("/artifacts/{artifact_id}", response_model=ArtifactResponse)
+def artifact(artifact_id: str) -> ArtifactResponse:
+    with db.connect(vector=False) as conn:
+        found = get_artifact(conn, artifact_id)
+    if found is None:
+        raise HTTPException(404, "no such artifact")
+    return found

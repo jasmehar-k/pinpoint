@@ -85,3 +85,40 @@ def test_evidence_summary_phrasing():
     assert evidence_summary({"authored": 1, "answered": 1}, "billing", None, NOW) == \
         "Authored 1 PR in Billing, answered 1 question"
     assert evidence_summary({}, None, None, NOW) == "Related activity"
+
+
+# ---- availability reranking ----
+
+from graph.experts import apply_availability  # noqa: E402
+from schema import Availability, Expert  # noqa: E402
+
+
+def _expert(pid, expertise, same_team=False):
+    return Expert(person_id=pid, name=pid, team="T", role="r", topic="messaging", expertise=expertise,
+                  rank_score=expertise, evidence_summary="", evidence=[], same_team=same_team)
+
+
+def _avail(pid, booked, reviews):
+    from graph.availability import factor
+    return Availability(person_id=pid, booked_pct=booked, open_reviews=reviews, factor=factor(booked, reviews))
+
+
+def test_busy_top_expert_loses_to_free_reviewer():
+    experts = [_expert("dana", 9.0, True), _expert("marcus", 5.6, True), _expert("victor", 5.5)]
+    avail = [_avail("dana", 0.78, 6), _avail("marcus", 0.35, 2), _avail("victor", 0.85, 9)]
+    ranked = apply_availability(experts, avail)
+    assert [(e.person_id, e.badge) for e in ranked] == [
+        ("marcus", "recommended"), ("dana", "busy"), ("victor", "busy")]
+    assert ranked[0].rank_score == pytest.approx(5.6 * 0.585 * 1.1, abs=0.01)
+    assert ranked[0].availability.booked_pct == 0.35
+
+
+def test_same_team_breaks_close_calls():
+    experts = [_expert("other", 5.0), _expert("mine", 4.8, same_team=True)]
+    avail = [_avail("other", 0.3, 0), _avail("mine", 0.3, 0)]
+    assert apply_availability(experts, avail)[0].person_id == "mine"
+
+
+def test_everyone_busy_means_no_recommendation():
+    ranked = apply_availability([_expert("a", 5.0)], [_avail("a", 0.9, 0)])
+    assert ranked[0].badge == "busy"

@@ -107,3 +107,32 @@ def test_evidence_urls_exist(conn):
     for e in find_experts(conn, "How does inbound email sync work?"):
         for ev in e.evidence:
             assert conn.execute("select 1 from artifacts where url = %s", (ev.url,)).fetchone(), ev.url
+
+
+# ---- availability (needs scripts.gen_meetings) ----
+
+from datetime import UTC, datetime  # noqa: E402
+
+from artifacts import get_artifact  # noqa: E402
+from graph.availability import get_availability  # noqa: E402
+from graph.experts import apply_availability  # noqa: E402
+
+
+def test_demo_story_marcus_recommended_over_busy_dana(conn):
+    experts = find_experts(conn, "How does inbound email sync work?", asker_id="priya-shah")
+    avail = get_availability(conn, [e.person_id for e in experts], datetime.now(UTC))
+    ranked = apply_availability(experts, avail.people)
+    assert (ranked[0].person_id, ranked[0].badge) == ("marcus-lee", "recommended")
+    badges = {e.person_id: e.badge for e in ranked}
+    assert badges["dana-okafor"] == badges["victor-hale"] == "busy"
+
+
+def test_priya_and_marcus_have_wednesday_1030(conn):
+    slots = get_availability(conn, ["priya-shah", "marcus-lee"], datetime.now(UTC)).mutual_free_slots
+    assert any(s.start.strftime("%a %H:%M") == "Wed 10:30" for s in slots) or datetime.now(UTC).weekday() == 2
+
+
+def test_artifact_page_for_a_pr(conn):
+    a = get_artifact(conn, "github:pr:26180")
+    assert a.kind == "pr" and a.messages is None and "messaging" in a.topics
+    assert ("authored", "dana-okafor") in [(p.type, p.person_id) for p in a.people]
