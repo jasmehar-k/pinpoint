@@ -69,8 +69,8 @@ export function Chat() {
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-4 px-4 py-5 sm:px-5">
           {messages.length === 0 && <EmptyState onPick={ask} />}
-          {messages.map((m) => (
-            <MessageView key={m.id} message={m} onAsk={ask} busy={loading} />
+          {messages.map((m, i) => (
+            <MessageView key={m.id} message={m} onAsk={ask} busy={loading} shownBefore={expertsShownBefore(messages, i)} />
           ))}
           {loading && <Thinking />}
           <div ref={bottom} />
@@ -108,7 +108,26 @@ export function Chat() {
   );
 }
 
-function MessageView({ message, onAsk, busy }: { message: Message; onAsk: (q: string) => void; busy: boolean }) {
+// Person ids that appeared on expert cards in replies before index i.
+function expertsShownBefore(messages: Message[], i: number): Set<string> {
+  const ids = new Set<string>();
+  for (const m of messages.slice(0, i)) {
+    if (m.role === "assistant") for (const e of m.response.experts ?? []) ids.add(e.person_id);
+  }
+  return ids;
+}
+
+function MessageView({
+  message,
+  onAsk,
+  busy,
+  shownBefore,
+}: {
+  message: Message;
+  onAsk: (q: string) => void;
+  busy: boolean;
+  shownBefore: Set<string>;
+}) {
   if (message.role === "user") {
     return (
       <div className="ml-auto max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-blue-600 px-4 py-2.5 text-[15px] text-white">
@@ -126,7 +145,11 @@ function MessageView({ message, onAsk, busy }: { message: Message; onAsk: (q: st
       </div>
     );
   }
-  const { reply, experts = [], pending_actions = [], availability } = message.response;
+  const { reply, pending_actions = [], availability } = message.response;
+  // A follow-up reply (no citations, e.g. "Here's a draft to Marcus instead.") repeats the
+  // expert it's about; skip cards for people already shown. New answers keep their full list.
+  const isFollowUp = reply.citations.length === 0;
+  const experts = (message.response.experts ?? []).filter((e) => !(isFollowUp && shownBefore.has(e.person_id)));
   // With experts, the backend's last paragraph is its code-written routing line ("Dana knows
   // this best but…"). It reads better after the cards, as in the mockup.
   const paragraphs = reply.text.split(/\n{2,}/);
