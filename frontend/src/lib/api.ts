@@ -80,6 +80,13 @@ export function approveAction(action: PendingAction, body: ApproveRequest = {}):
   return call(`/actions/${action.id}/approve`, { method: "POST", body: JSON.stringify(body) });
 }
 
+// POST /actions/{id}/reject, no body. Takes the action like approveAction so fixture mode
+// can answer without a fixture file.
+export function rejectAction(action: PendingAction): Promise<PendingAction> {
+  if (USE_FIXTURES) return Promise.resolve({ ...action, status: "rejected" });
+  return call(`/actions/${action.id}/reject`, { method: "POST" });
+}
+
 export function getArtifact(id: string): Promise<ArtifactResponse> {
   // Fixture mode has one example artifact; every id gets it
   return USE_FIXTURES ? fixture("artifact.json") : call(`/artifacts/${encodeURIComponent(id)}`);
