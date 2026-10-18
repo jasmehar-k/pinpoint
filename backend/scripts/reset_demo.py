@@ -21,7 +21,9 @@ def delete_slack_messages(conn) -> int:
         "select result->>'channel', result->>'ts' from pending_actions "
         "where kind = 'send_message' and result->>'delivery' = 'slack'"
     ).fetchall()
-    replies = conn.execute("select channel_id, reply_ts from slack_replies where reply_ts is not null").fetchall()
+    replies = conn.execute("select channel_id, reply_ts from slack_replies where reply_ts is not null "
+                           "union all select channel_id, confirm_ts from slack_replies where confirm_ts is not null"
+                           ).fetchall()
     rows = dms + replies
     if not rows or not os.getenv("SLACK_BOT_TOKEN"):
         return 0

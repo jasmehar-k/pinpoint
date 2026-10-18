@@ -2,6 +2,10 @@
 prints what it would post (dry run). Starts from "now" so it never answers old messages, and
 records every answer in slack_replies so a restart never replies twice.
 
+"That answered it": when a person reacts with a check mark on one of our replies (last 2 days),
+the thread is saved as a known answer (an `answer` artifact, embedded right away) so the next
+person who asks something similar gets it cited.
+
     uv run python -m scripts.help_bot [--channel help] [--once] [--every 30]
 """
 
@@ -13,9 +17,12 @@ from datetime import UTC, datetime
 import config
 import db
 from agent.chat import answer_question
-from agent.help_bot import GUEST, format_reply, is_new_question
+from agent.help_bot import GUEST, SAVED_NOTE, answered_it, format_reply, is_new_question, thread_text
 from connectors import slack
+from connectors.store import store
+from embeddings import embed_documents
 from org import people_by_slack_user_id
+from schema import Artifact
 
 APP_URL = os.getenv("PINPOINT_APP_URL", "http://localhost:3000")
 
@@ -66,11 +73,46 @@ def poll(web, conn, channel: str, bot_user: str, oldest: float, live: bool, seen
             seen.discard(msg["ts"])
             print(f"  couldn't reply: {e}")
             continue
-        conn.execute("update slack_replies set reply_ts = %s where channel_id = %s and message_ts = %s",
-                     (posted["ts"], channel, msg["ts"]))
+        topic = answered.experts[0].topic if answered.experts else None
+        conn.execute("update slack_replies set reply_ts = %s, topic = %s where channel_id = %s and message_ts = %s",
+                     (posted["ts"], topic, channel, msg["ts"]))
         conn.commit()
         print(f"  replied in thread ({posted['ts']})")
     return newest
+
+
+def save_answered(web, conn, channel: str, bot_user: str, workspace: str) -> None:
+    """Save threads where someone reacted with a check mark on our reply."""
+    rows = conn.execute(
+        """
+        select message_ts, reply_ts, topic from slack_replies
+        where channel_id = %s and reply_ts is not null and promoted_at is null
+          and created_at > now() - interval '2 days'
+        """,
+        (channel,),
+    ).fetchall()
+    for message_ts, reply_ts, topic in rows:
+        thread = web.conversations_replies(channel=channel, ts=message_ts)["messages"]
+        ours = next((m for m in thread if m["ts"] == reply_ts), None)
+        if not ours or not answered_it(ours, bot_user):
+            continue
+        people = people_by_slack_user_id()
+        text = thread_text(thread, people, bot_user, slack.clean_text)
+        question = slack.clean_text(thread[0].get("text") or "", people)
+        artifact = Artifact(
+            id=f"answer:{channel}:{message_ts}", source="slack", kind="answer",
+            title=f"#help (answered): {' '.join(question.split())[:80]}", text=text,
+            url=slack.permalink(workspace, channel, message_ts),
+            timestamp=datetime.fromtimestamp(float(message_ts), tz=UTC), topics=[topic] if topic else [],
+        )
+        # No events: expertise comes from the people in the thread via ingest_slack, not from this copy
+        store(conn, [artifact], [])
+        conn.execute("update artifacts set embedding = %s where id = %s", (embed_documents([text])[0], artifact.id))
+        note = web.chat_postMessage(channel=channel, thread_ts=message_ts, text=SAVED_NOTE)
+        conn.execute("update slack_replies set promoted_at = now(), confirm_ts = %s "
+                     "where channel_id = %s and message_ts = %s", (note["ts"], channel, message_ts))
+        conn.commit()
+        print(f"  saved {artifact.id} as a known answer")
 
 
 def main() -> None:
@@ -86,12 +128,15 @@ def main() -> None:
     web = slack.client()
     bot_user = web.auth_test()["user_id"]
     channel = _channel_id(web, args.channel)
+    workspace = slack.workspace_url(web)
     oldest = time.time() - args.since_minutes * 60
     print(f"watching #{args.channel} every {args.every:.0f}s ({'LIVE: posting replies' if live else 'dry run'})")
     seen: set[str] = set()
     while True:
         with db.connect() as conn:
             oldest = poll(web, conn, channel, bot_user, oldest, live, seen)
+            if live:
+                save_answered(web, conn, channel, bot_user, workspace)
         if args.once:
             return
         time.sleep(args.every)
