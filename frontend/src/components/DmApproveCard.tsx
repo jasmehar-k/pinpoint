@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { DEMO_USER } from "@/lib/demo";
 import { firstName, nameFromId } from "@/lib/people";
+import { rewriteAction } from "@/lib/api";
 import type { Citation, PendingAction, SendMessagePayload } from "@/lib/types";
 
 import { ActionButtons, CardShell } from "./ActionCard";
@@ -13,14 +14,32 @@ import { useApproval } from "./useApproval";
 type DmAction = Extract<PendingAction, { kind: "send_message" }>;
 
 // The DM never goes out until Approve is clicked. Approve sends the text as edited here.
-// `context` is what the draft was written from: the sources of the answer that produced it.
+// Context chips: the sources the backend attached to the draft, else those of the answer
+// that produced it.
 export function DmApproveCard({ action, context = [] }: { action: DmAction; context?: Citation[] }) {
-  const draft = action.payload.text;
   const to = action.payload.to;
+  const attached = action.payload.context?.length ? action.payload.context : context;
+  const [draft, setDraft] = useState(action.payload.text); // the backend's current version
   const [text, setText] = useState(draft);
+  const [rewrite, setRewrite] = useState<{ busy: boolean; error?: string }>({ busy: false });
   const { state, approve, dismiss } = useApproval(action);
   const edited = text.trim() !== draft.trim();
   const label = `Slack DM to ${nameFromId(to)}`;
+
+  // The backend rewrites its stored draft, so local edits would be lost: only offered unedited.
+  async function onRewrite() {
+    setRewrite({ busy: true });
+    try {
+      const updated = await rewriteAction(action);
+      if (updated.kind === "send_message") {
+        setDraft(updated.payload.text);
+        setText(updated.payload.text);
+      }
+      setRewrite({ busy: false });
+    } catch (e) {
+      setRewrite({ busy: false, error: `Couldn't rewrite: ${e instanceof Error ? e.message : String(e)}` });
+    }
+  }
 
   function onApprove() {
     if (!text.trim()) return;
@@ -65,10 +84,10 @@ export function DmApproveCard({ action, context = [] }: { action: DmAction; cont
             aria-label="Message text"
             className="mt-1.5 block w-full resize-y rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-[15px] outline-none [field-sizing:content] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:text-zinc-500"
           />
-          {context.length > 0 && (
+          {attached.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-zinc-500">
               <span>Context attached:</span>
-              {context.map((c) => (
+              {attached.map((c) => (
                 <SourceLink key={c.id} url={c.url} title={c.title} className="rounded-md bg-blue-50 px-2 py-0.5 font-mono text-blue-800 hover:bg-blue-100">
                   {shortLabel(c)}
                 </SourceLink>
@@ -76,13 +95,27 @@ export function DmApproveCard({ action, context = [] }: { action: DmAction; cont
             </div>
           )}
           <p className="mt-2 text-xs text-zinc-500">Sends as Pinpoint on behalf of {DEMO_USER.name}</p>
-          {/* "Rewrite shorter" goes here once POST /actions/{id}/rewrite exists. */}
+          {rewrite.error && (
+            <p role="alert" className="mt-2 text-sm text-red-700">
+              {rewrite.error}
+            </p>
+          )}
           <ActionButtons
             state={state}
             approveLabel="Approve and send"
             workingLabel="Sending…"
-            disabled={!text.trim()}
+            disabled={!text.trim() || rewrite.busy}
             note={edited ? "Edited" : undefined}
+            extra={
+              <button
+                onClick={onRewrite}
+                disabled={state.phase !== "draft" || edited || rewrite.busy}
+                title={edited ? "Rewrites the original draft, so undo your edits first" : undefined}
+                className="h-10 rounded-lg border border-zinc-300 bg-white px-4 text-sm font-medium hover:bg-zinc-50 disabled:cursor-not-allowed disabled:text-zinc-400"
+              >
+                {rewrite.busy ? "Rewriting…" : "Rewrite shorter"}
+              </button>
+            }
             errorPrefix="Not sent"
             onApprove={onApprove}
             onDismiss={dismiss}
