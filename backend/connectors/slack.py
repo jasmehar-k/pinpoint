@@ -71,8 +71,14 @@ def readable_channels(web: WebClient, names: list[str] | None = None) -> tuple[l
     return readable, skipped
 
 
+def slack_ts(seconds: float) -> str:
+    """Slack timestamps have exactly 6 decimals. str(float) can give 7, which Slack misreads as
+    a time centuries ahead (1784521190.1529942 -> 17845211901.529942) and returns nothing."""
+    return f"{seconds:.6f}"
+
+
 def _fetch_channel(web: WebClient, channel_id: str, oldest: float) -> list[list[dict]]:
-    history = paginate(web.conversations_history, "messages", channel=channel_id, oldest=str(oldest))
+    history = paginate(web.conversations_history, "messages", channel=channel_id, oldest=slack_ts(oldest))
     threads = []
     for msg in history:
         if msg.get("reply_count"):
