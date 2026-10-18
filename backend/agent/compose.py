@@ -114,7 +114,7 @@ separately.
 
 dm: a short, friendly Slack message from the asker to the recipient asking for 30 minutes this \
 week to talk through the question. 2 to 4 sentences, first person, mention one relevant PR number \
-from the sources (like #26180) if there is one. Only use the asker's and recipient's names."""
+from the sources (like #26180) if there is one. Use first names only, and no em dashes."""
 
 
 def build_prompt(question: str, hits: list[Hit], asker: Person, recipient: Person | None) -> str:
@@ -168,6 +168,13 @@ def drop_unlisted_people(text: str, people: list[Person], allowed: set[str]) -> 
     sentences = re.split(r"(?<=[.!?])\s+", text)
     kept = [s for s in sentences if not any(re.search(rf"\b{re.escape(n)}\b", s) for n in banned)]
     return " ".join(kept).strip()
+
+
+def tidy_dm(text: str, recipient: Person) -> str:
+    """First names only ("Hi Marcus", not "Hey Marcus Lee") and no em dashes."""
+    text = text.replace(recipient.name, recipient.name.split()[0])
+    text = re.sub(r"\s*[\u2014\u2013]\s*", ", ", text)
+    return re.sub(r",\s*,", ",", text).strip()
 
 
 def fallback_answer(hits: list[Hit]) -> tuple[str, list[int]]:

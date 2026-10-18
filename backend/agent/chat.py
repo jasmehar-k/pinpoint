@@ -17,7 +17,7 @@ import llm
 from agent import actions
 from agent.compose import (SYSTEM, build_prompt, drop_unlisted_people, fallback_answer, fallback_dm,
                            intent, named_expert, parse_reply, pick_slot, renumber_citations,
-                           routing_text, slot_label, slot_preference)
+                           routing_text, slot_label, slot_preference, tidy_dm)
 from graph.availability import get_availability
 from graph.experts import apply_availability, find_experts, topic_label
 from org import load_org, people_by_id
@@ -119,6 +119,7 @@ def _question(conn, convo: Conversation, question: str, now: datetime, client) -
         dm = drop_unlisted_people(dm, load_org().people, {asker.id, recipient.id})
         if len(dm) < 40:
             dm = fallback_dm(asker, recipient, question, convo.topic)
+        dm = tidy_dm(dm, recipient)
         pending.append(actions.create(conn, "send_message", SendMessagePayload(to=recipient.id, text=dm), asker.id))
         convo.contact = recipient.id
 
