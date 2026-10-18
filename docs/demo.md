@@ -32,8 +32,9 @@ About 3 minutes. Harshita drives the laptop as Priya Shah (new hire, Integration
 | 4 | Change a word in the draft (it opens "I'm Priya, new on Integrations"), click **Approve and send** | Nothing is sent until you approve. **Hold up the phone: the DM from Pinpoint, on behalf of Priya, has arrived.** |
 | 5 | Type **Can you book time with Marcus on Wednesday at 10:30am?** | It shows both calendars for the week and three slots you're both free. Wed 10:30 is preselected. |
 | 6 | Click **Book Wed 10:30 AM** | Booked and on both calendars. |
-| 7 | Type **How are subscriptions and plan upgrades billed?** | Same pipeline, different expert: Isabel Moreno (60 Billing PRs, 34% booked) is Recommended. |
+| 7 | Type **How are subscriptions and plan upgrades billed?** | Same pipeline, different expert: Isabel Moreno (60 Billing PRs, about 34% booked) is Recommended. |
 | 7b | Click **Bus factor** above the graph | Red topics have one expert: Messaging (Dana), Billing (Isabel), Metadata and Frontend (both Victor, who is 84% booked). The at-risk list names who's next closest. |
+| 7c | *Optional:* open **localhost:3000/code**, click line **80**, shift-click line **84**, click **Ask Pinpoint about this**, type **Why does the cron skip channels with an active webhook?** | Pinpoint also lives where engineers already are. The bubble knows the file and the selected lines: it explains why active webhooks skip the cron (PR #26180, Dana's #help thread) and recommends Marcus. Then click **Show in graph**: the graph opens on Messaging with the same chat beside it. |
 | 8 | Close | "We only read public channels the bot is invited to, and anyone can opt out." |
 
 Spare question if there's time: **How do workflow triggers and actions run?** Elena Petrova knows it best but is 70% booked, so Ken Watanabe, who reviewed 17 of her Workflow PRs, is Recommended.
