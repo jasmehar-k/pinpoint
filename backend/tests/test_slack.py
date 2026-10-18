@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from connectors.slack import clean_text, normalize_thread, paginate, permalink
+from connectors.slack import clean_text, normalize_thread, paginate, permalink, slack_ts
 from schema import Artifact, Person
 from tagging import parse_tags, reuse_tags, tag_topics
 
@@ -192,3 +192,8 @@ def test_reuse_tags_only_for_unchanged_tagged_threads():
     reused, todo = reuse_tags([a, b, c], existing)
     assert reused == {a.id: ["messaging"]}
     assert [x.id for x in todo] == [b.id, c.id]
+
+
+def test_slack_ts_always_has_six_decimals():
+    assert slack_ts(1784521190.1529942) == "1784521190.152994"
+    assert slack_ts(1784521190) == "1784521190.000000"

@@ -66,7 +66,8 @@ Frontend (Next.js 16, run from `frontend/`):
 npm install
 npm run dev        # :3000
 npm run lint
-npx tsc --noEmit
+npm run typecheck  # next typegen + tsc; plain tsc fails on a clean checkout
+npm run build
 ```
 
 Next 16 has breaking changes vs older versions. Read `frontend/AGENTS.md` and the bundled docs in `frontend/node_modules/next/dist/docs/` before writing frontend code.
