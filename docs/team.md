@@ -58,7 +58,9 @@ All calls go through `frontend/src/lib/api.ts`. When a backend route is ready, y
 - Read real answers as they land and flag anything that sounds wrong, too long, or robotic
 - Own the run-through and the pitch, including the one-line privacy note (public channels only, opt-out)
 
-**Later (V1), if time allows:** live Slack ingest and the `#help` fast path. Both are Slack-heavy; we'll decide who takes them once the core loop works.
+**Live Slack ingest (Jasmehar):** the connector is built and merged (`backend/connectors/slack.py`). What's left is the setup in `docs/slack-setup.md`: create the app, invite the bot to `#help`, put member IDs in `people.json` (teammate on `marcus-lee`, Jasmehar on `priya-shah`), post a few test questions, run `ingest_slack` then `embed`.
+
+**Later (V1), if time allows:** the `#help` fast path. We'll decide who takes it once the core loop works.
 
 ## Checkpoints
 
