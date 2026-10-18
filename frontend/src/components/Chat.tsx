@@ -178,7 +178,7 @@ function MessageView({
       {routing && <p className="text-[15px] leading-relaxed">{routing}</p>}
       {pending_actions.map((a) =>
         a.kind === "send_message" ? (
-          <DmApproveCard key={a.id} action={a} />
+          <DmApproveCard key={a.id} action={a} context={reply.citations} />
         ) : (
           <MeetingApproveCard key={a.id} action={a} availability={availability} />
         ),
