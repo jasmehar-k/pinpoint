@@ -117,3 +117,6 @@ create table if not exists slack_replies (
     created_at  timestamptz not null default now(),
     primary key (channel_id, message_ts)
 );
+alter table slack_replies add column if not exists topic text;
+alter table slack_replies add column if not exists promoted_at timestamptz;  -- someone reacted ✅
+alter table slack_replies add column if not exists confirm_ts text;          -- our "saved" note

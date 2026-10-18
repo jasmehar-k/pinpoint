@@ -43,5 +43,29 @@ def test_format_reply():
         "*Who knows messaging*",
         "*Marcus Lee* · reviewed 38 of Dana's Messaging PRs · 35% booked this week · *best bet*",
         "",
-        "<http://app|Open in Pinpoint> to draft a DM or book time.",
+        "<http://app|Open in Pinpoint> to draft a DM or book time. React :white_check_mark: if this answered it, and I'll save it for the next person who asks.",
     ]
+
+
+def test_answered_it_needs_a_person_and_a_check():
+    from agent.help_bot import answered_it
+    assert answered_it({"reactions": [{"name": "white_check_mark", "users": ["U1"]}]}, BOT)
+    assert not answered_it({"reactions": [{"name": "white_check_mark", "users": [BOT]}]}, BOT)
+    assert not answered_it({"reactions": [{"name": "eyes", "users": ["U1"]}]}, BOT)
+    assert not answered_it({}, BOT)
+
+
+def test_thread_text_keeps_the_answer_not_the_expert_list():
+    from agent.help_bot import SAVED_NOTE, thread_text
+    from connectors.slack import clean_text
+    from org import load_org
+    priya = next(p for p in load_org().people if p.id == "priya-shah")
+    thread = [
+        {"ts": "1", "user": "UPRIYA", "text": "who knows IMAP?"},
+        {"ts": "2", "bot_id": "B1", "user": BOT,
+         "text": "Marcus Lee helped with this <https://x/1|[1]>.\n\n*Who knows messaging*\n*Marcus Lee* · ..."},
+        {"ts": "3", "user": "UPRIYA", "text": "thanks!"},
+        {"ts": "4", "bot_id": "B1", "user": BOT, "text": SAVED_NOTE},
+    ]
+    assert thread_text(thread, {"UPRIYA": priya}, BOT, clean_text).splitlines() == [
+        "Priya Shah: who knows IMAP?", "Pinpoint: Marcus Lee helped with this [1].", "Priya Shah: thanks!"]
