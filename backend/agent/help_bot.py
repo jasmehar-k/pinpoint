@@ -13,17 +13,18 @@ from topics import TOPICS
 GUEST = Person(id="slack-guest", name="A teammate", team="Acme", role="engineer", manager=None,
                github_login=None, slack_handle="guest")
 
-_QUESTION_START = re.compile(r"^(how|why|what|who|where|when|which|does|do|is|are|can|could|should|has|any(one)?)\b", re.I)
+_ASKING = re.compile(r"\b(how|why|what|who|where|when|which|anyone|anybody|know|help|stuck|issue|error|broken|fail\w*)\b", re.I)
 
 
 def is_new_question(msg: dict, bot_user_id: str) -> bool:
-    """A top-level human message in the channel that reads like a question."""
+    """A top-level human message that asks for something: a "?" or a question/help word anywhere
+    ("hey, who's the best person for IMAP. needed some help" counts; "thanks!" doesn't)."""
     if msg.get("subtype") or msg.get("bot_id") or not msg.get("user") or msg["user"] == bot_user_id:
         return False
     if msg.get("thread_ts") and msg["thread_ts"] != msg["ts"]:
         return False  # a reply inside a thread
     text = (msg.get("text") or "").strip()
-    return len(text) >= 12 and ("?" in text or bool(_QUESTION_START.search(text)))
+    return len(text) >= 12 and ("?" in text or bool(_ASKING.search(text)))
 
 
 def _absolute(url: str, app_url: str) -> str:

@@ -12,6 +12,7 @@ def _msg(**kw):
 def test_is_new_question():
     assert is_new_question(_msg(), BOT)
     assert is_new_question(_msg(text="anyone know where billing webhooks live"), BOT)
+    assert is_new_question(_msg(text="hey, who's the best person to contact about IMAP. needed some help setting up"), BOT)
     assert not is_new_question(_msg(text="thanks!"), BOT)
     assert not is_new_question(_msg(text="FYI deploy is done today"), BOT)
     assert not is_new_question(_msg(user=BOT), BOT)

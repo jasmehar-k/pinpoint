@@ -27,9 +27,13 @@ def _channel_id(web, name: str) -> str:
     return channels[0]["id"]
 
 
-def _answered(conn, channel: str, ts: str) -> bool:
-    return conn.execute("select 1 from slack_replies where channel_id = %s and message_ts = %s",
-                        (channel, ts)).fetchone() is not None
+def _claim(conn, channel: str, ts: str) -> bool:
+    """Record that we're answering this message. False if another run already did, so two bots
+    running at once can't both reply."""
+    row = conn.execute("insert into slack_replies (channel_id, message_ts) values (%s, %s) "
+                       "on conflict do nothing returning message_ts", (channel, ts)).fetchone()
+    conn.commit()
+    return row is not None
 
 
 def poll(web, conn, channel: str, bot_user: str, oldest: float, live: bool, seen: set[str]) -> float:
@@ -38,9 +42,11 @@ def poll(web, conn, channel: str, bot_user: str, oldest: float, live: bool, seen
     newest = oldest
     for msg in sorted(res["messages"], key=lambda m: float(m["ts"])):
         newest = max(newest, float(msg["ts"]))
-        if not is_new_question(msg, bot_user) or msg["ts"] in seen or _answered(conn, channel, msg["ts"]):
+        if not is_new_question(msg, bot_user) or msg["ts"] in seen:
             continue
         seen.add(msg["ts"])
+        if live and not _claim(conn, channel, msg["ts"]):
+            continue
         people = people_by_slack_user_id()
         asker = people.get(msg["user"], GUEST)
         question = slack.clean_text(msg["text"], people)
@@ -51,10 +57,17 @@ def poll(web, conn, channel: str, bot_user: str, oldest: float, live: bool, seen
         if not live:
             print("  [dry run] would reply:\n" + "\n".join("    " + line for line in reply.splitlines()))
             continue
-        posted = web.chat_postMessage(channel=channel, thread_ts=msg["ts"], text=reply,
-                                      unfurl_links=False, unfurl_media=False)
-        conn.execute("insert into slack_replies (channel_id, message_ts, reply_ts) values (%s, %s, %s) "
-                     "on conflict do nothing", (channel, msg["ts"], posted["ts"]))
+        try:
+            posted = web.chat_postMessage(channel=channel, thread_ts=msg["ts"], text=reply,
+                                          unfurl_links=False, unfurl_media=False)
+        except Exception as e:  # release the claim so the next poll retries
+            conn.execute("delete from slack_replies where channel_id = %s and message_ts = %s", (channel, msg["ts"]))
+            conn.commit()
+            seen.discard(msg["ts"])
+            print(f"  couldn't reply: {e}")
+            continue
+        conn.execute("update slack_replies set reply_ts = %s where channel_id = %s and message_ts = %s",
+                     (posted["ts"], channel, msg["ts"]))
         conn.commit()
         print(f"  replied in thread ({posted['ts']})")
     return newest
