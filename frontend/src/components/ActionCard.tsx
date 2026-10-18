@@ -4,12 +4,14 @@ import type { Approval } from "./useApproval";
 
 // Frame shared by the DM and meeting approve cards. A dismissed card collapses to one line.
 export function CardShell({
+  id,
   label,
   title,
   aside,
   dismissed,
   children,
 }: {
+  id?: string;
   label: string;
   title: string;
   aside: string;
@@ -18,13 +20,13 @@ export function CardShell({
 }) {
   if (dismissed) {
     return (
-      <article aria-label={label} className="rounded-xl border border-zinc-200 px-4 py-3 text-sm text-zinc-500 dark:border-zinc-800">
+      <article id={id} aria-label={label} className="rounded-xl border border-zinc-200 px-4 py-3 text-sm text-zinc-500 dark:border-zinc-800">
         <span className="font-medium text-zinc-700 dark:text-zinc-300">{title}</span> · <span role="status">{dismissed}</span>
       </article>
     );
   }
   return (
-    <article aria-label={label} className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+    <article id={id} aria-label={label} className="rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
       <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h4 className="font-semibold">{title}</h4>
         <span className="text-xs text-zinc-500">{aside}</span>
