@@ -25,7 +25,6 @@ Priya asks *"How does inbound email sync work?"*
 It also works where people already ask:
 
 - **Slack `#help`:** Pinpoint answers new questions in the thread on its own, with sources, who knows the topic and how booked they are. React ✅ and the thread is saved as a known answer, so the next new hire gets it instantly.
-- **In the code:** a floating bubble on a code page shows who knows the file you're reading, and answers questions about it.
 - **For managers:** a graph of people and topics, with a bus factor view that flags topics only one person knows.
 
 The live walkthrough is in [docs/demo.md](docs/demo.md).

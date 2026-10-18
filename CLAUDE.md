@@ -245,7 +245,7 @@ Chat is the core. The graph and bus factor view are back in scope (Harshita is b
 - Graph modes: Experts / Bus factor.
 - Chat shows answers with citation chips, expert cards (evidence line, availability bar, Busy/Recommended badge, "Not the right person?" correction link), approve cards for DMs and meetings, and a mini week view for scheduling.
 - Selecting an expert in chat highlights them in the graph, and vice versa.
-- Mockups are in `frontend/mockups/` (by Harshita): main view, approve DM + book meeting + Slack #help fast path, bus factor (deferred), floating bubble. They say "Wayfinder", the plan's old name; the product is Pinpoint. The #help mockup's Slack buttons need a public URL for Slack callbacks, which we don't have (we poll), so the bot uses links instead; "That answered it" can be a reaction the bot polls for.
+- Mockups are in `frontend/mockups/` (by Harshita): main view, approve DM + book meeting + Slack #help fast path, bus factor. They say "Wayfinder", the plan's old name; the product is Pinpoint. The #help mockup's Slack buttons need a public URL for Slack callbacks, which we don't have (we poll), so the bot uses links instead; "That answered it" can be a reaction the bot polls for.
 
 Build the frontend against `/fixtures` JSON from hour 0. Swap to real endpoints when they land.
 
@@ -266,7 +266,7 @@ Build the frontend against `/fixtures` JSON from hour 0. Swap to real endpoints 
 - Correction button
 - Per-user profile
 
-**In progress:** graph view with topic focus and bus factor (`GET /graph`). **Later:** graph ⇄ chat linking, the floating bubble (`/experts?path=`, `context` on `ChatRequest`).
+**In progress:** graph view with topic focus and bus factor (`GET /graph`). **Later:** graph ⇄ chat linking. **Dropped:** the floating bubble on a fake code page (built, then removed; don't bring it back).
 
 **Stretch:** Notion/Confluence connector, Gmail fallback send, live Slack events, real Google Calendar for one account.
 

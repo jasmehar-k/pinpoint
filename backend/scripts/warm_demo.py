@@ -10,7 +10,7 @@ import time
 import db
 from agent.chat import handle
 from schema import ChatRequest
-from seed.demo_questions import FOLLOW_UPS, QUESTIONS, USER, bubble_questions
+from seed.demo_questions import FOLLOW_UPS, QUESTIONS, USER
 
 
 def main() -> None:
@@ -18,7 +18,7 @@ def main() -> None:
     os.environ["LLM_TIMEOUT"] = "180"
     created = []
     with db.connect() as conn:
-        for question in QUESTIONS + bubble_questions():
+        for question in QUESTIONS:
             start = time.time()
             res = handle(conn, ChatRequest(message=question, user=USER))
             created += [a.id for a in res.pending_actions]
@@ -27,8 +27,7 @@ def main() -> None:
                 created += [a.id for a in more.pending_actions]
             cited = len(res.reply.citations)
             top = res.experts[0].name if res.experts else "nobody"
-            label = question.splitlines()[-1] + (" (code bubble)" if question.startswith("About ") else "")
-            print(f"  {time.time() - start:5.1f}s  {cited} citations, top: {top:14}  {label}")
+            print(f"  {time.time() - start:5.1f}s  {cited} citations, top: {top:14}  {question}")
         conn.execute("delete from pending_actions where id = any(%s)", (created,))
     print("cached. Run it again: every question should take about a second")
 

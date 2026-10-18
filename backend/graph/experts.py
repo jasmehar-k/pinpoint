@@ -5,7 +5,6 @@ similarity x type weight x decay. The question's topic is the one most of those 
 share; the evidence line comes from that topic's expertise row.
 """
 
-import re
 from collections import Counter
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
@@ -52,15 +51,6 @@ def named_topic(paths: list[str]) -> str | None:
     if specific:
         return max(specific)[1]
     return "frontend" if counts else None
-
-
-_PAGE_PATH = re.compile(r"^About (packages/\S+?)(?:, lines \d+-\d+)?:", re.M)
-
-
-def page_topic(query: str) -> str | None:
-    """Questions from the code bubble start "About <file path>": the file says what it's about."""
-    m = _PAGE_PATH.search(query)
-    return topic_for_path(m.group(1)) if m else None
 
 
 def dominant_topic(hits: list[Hit]) -> str | None:
@@ -208,7 +198,7 @@ def find_experts(conn, query: str, asker_id: str | None = None, now: datetime | 
     hits = named + [h for h in relevant(search_artifacts(conn, query, k=TOP_ARTIFACTS, exclude=exclude))
                     if h.id not in {n.id for n in named}]
     not_experts = {asker_id} if asker_id else set()
-    topic = (named_topic(_paths(conn, named[0].id)) if named else None) or page_topic(query) or dominant_topic(hits)
+    topic = (named_topic(_paths(conn, named[0].id)) if named else None) or dominant_topic(hits)
     ranked = rank_candidates(hits, _events_on(conn, [h.id for h in hits]), now, not_experts)
     if topic:
         ranked = apply_corrections(ranked, _corrections(conn, topic), not_experts)

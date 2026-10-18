@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { SUGGESTED_QUESTIONS } from "@/lib/demo";
@@ -34,7 +33,6 @@ export function CommandPalette() {
 
 function PaletteDialog({ onClose }: { onClose: () => void }) {
   const { setTopic, setPerson, setMode, ask } = useGraphFocus();
-  const router = useRouter();
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const listRef = useRef<HTMLUListElement>(null);
@@ -54,9 +52,8 @@ function PaletteDialog({ onClose }: { onClose: () => void }) {
       { id: "mode-bus", group: "Graph", label: "Show bus factor", run: () => setMode("bus") },
       { id: "mode-experts", group: "Graph", label: "Show experts", run: () => setMode("experts") },
       ...SUGGESTED_QUESTIONS.map((q, i) => ({ id: `ask-${i}`, group: "Ask", label: q, run: () => ask(q) })),
-      { id: "go-code", group: "Go to", label: "Open the code page", run: () => router.push("/code") },
     ],
-    [setTopic, setPerson, setMode, ask, router],
+    [setTopic, setPerson, setMode, ask],
   );
 
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);

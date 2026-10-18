@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { sendChat } from "@/lib/api";
 import { DEMO_USER, SUGGESTED_QUESTIONS } from "@/lib/demo";
-import { withPageContext, type PageContext } from "@/lib/pageContext";
 import { firstName } from "@/lib/people";
 import type { ChatResponse, Expert } from "@/lib/types";
 
@@ -15,27 +14,14 @@ import { useGraphFocus } from "./graphFocus";
 import { MeetingApproveCard } from "./MeetingApproveCard";
 
 type Message =
-  | { id: number; role: "user"; text: string; note?: string } // note: the page context sent with it
+  | { id: number; role: "user"; text: string }
   | { id: number; role: "assistant"; response: ChatResponse }
   | { id: number; role: "error"; text: string; retry: string };
 
 // Omit that keeps the union: Omit<Message, "id"> would merge the variants.
 type NewMessage = Message extends infer M ? (M extends Message ? Omit<M, "id"> : never) : never;
 
-// Everything is optional: the main page uses <Chat /> as is. The /code page's bubble passes a
-// title, header actions, its own intro and chips, and the page context added to questions.
-type ChatProps = {
-  title?: string;
-  actions?: ReactNode; // header, right side
-  intro?: ReactNode; // replaces the starter questions
-  composerTop?: ReactNode; // above the input (chips, selection tag)
-  placeholder?: string;
-  pageContext?: PageContext | null;
-  askRef?: RefObject<((question: string) => void) | null>; // lets the page send a question
-  focusSignal?: number; // change it to focus the input
-};
-
-export function Chat({ title = "Ask Pinpoint", actions, intro, composerTop, placeholder, pageContext, askRef, focusSignal }: ChatProps = {}) {
+export function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -51,23 +37,18 @@ export function Chat({ title = "Ask Pinpoint", actions, intro, composerTop, plac
 
   useEffect(() => {
     if (!loading) inputRef.current?.focus();
-  }, [loading, focusSignal]);
+  }, [loading]);
 
-  // raw: expert-card follow-ups ("Book time with Marcus this week") go out as is, so the
-  // backend's follow-up matching sees exactly that text; typed questions get the page context.
-  async function ask(text: string, raw = false) {
+  async function ask(text: string) {
     const question = text.trim();
     if (!question || loading) return;
-    const message = raw ? question : withPageContext(question, pageContext);
     const add = (m: NewMessage) => setMessages((ms) => [...ms, { ...m, id: nextId.current++ }]);
 
-    const file = pageContext?.path.split("/").at(-1);
-    const note = raw || !pageContext ? undefined : pageContext.lines ? `Lines ${pageContext.lines.start}–${pageContext.lines.end} of ${file}` : `About ${file}`;
-    add({ role: "user", text: question, note });
+    add({ role: "user", text: question });
     setInput("");
     setLoading(true);
     try {
-      const response = await sendChat({ message, conversation_id: conversationId, user: DEMO_USER.id });
+      const response = await sendChat({ message: question, conversation_id: conversationId, user: DEMO_USER.id });
       setConversationId(response.conversation_id);
       add({ role: "assistant", response });
       // A new answer focuses its topic in the graph.
@@ -79,10 +60,9 @@ export function Chat({ title = "Ask Pinpoint", actions, intro, composerTop, plac
     }
   }
 
-  // The bubble passes its own handle; otherwise the shared one (used by the command palette).
+  // Lets the command palette send a question.
   useEffect(() => {
-    if (askRef) askRef.current = (q: string) => void ask(q);
-    else registerAsk((q: string) => void ask(q));
+    registerAsk((q: string) => void ask(q));
   });
 
   // Clears the thread and starts a new conversation (old drafts stay pending in the backend).
@@ -103,7 +83,7 @@ export function Chat({ title = "Ask Pinpoint", actions, intro, composerTop, plac
   return (
     <section aria-label="Ask Pinpoint" className="flex min-h-0 flex-col rounded-xl border border-zinc-200 bg-white">
       <header className="flex items-center justify-between gap-3 border-b border-zinc-100 px-5 py-4">
-        <h2 className="font-semibold">{title}</h2>
+        <h2 className="font-semibold">Ask Pinpoint</h2>
         <div className="flex items-center gap-1">
           {messages.length > 0 && (
             <button
@@ -114,14 +94,13 @@ export function Chat({ title = "Ask Pinpoint", actions, intro, composerTop, plac
               New chat
             </button>
           )}
-          {actions}
         </div>
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-4 px-4 py-5 sm:px-5">
-          {messages.length === 0 && (intro ?? <EmptyState onPick={ask} />)}
+          {messages.length === 0 && <EmptyState onPick={ask} />}
           {messages.map((m, i) => (
-            <MessageView key={m.id} message={m} onAsk={ask} onFollowUp={(q) => ask(q, true)} busy={loading} shownBefore={expertsShownBefore(messages, i)} />
+            <MessageView key={m.id} message={m} onAsk={ask} onFollowUp={ask} busy={loading} shownBefore={expertsShownBefore(messages, i)} />
           ))}
           {loading && <Thinking />}
           <div ref={bottom} />
@@ -129,7 +108,6 @@ export function Chat({ title = "Ask Pinpoint", actions, intro, composerTop, plac
       </div>
 
       <form onSubmit={onSubmit} className="border-t border-zinc-100">
-        {composerTop && <div className="px-4 pt-3 sm:px-5">{composerTop}</div>}
         <div className="flex items-end gap-2 px-4 py-3 sm:px-5">
           <textarea
             ref={inputRef}
@@ -143,7 +121,7 @@ export function Chat({ title = "Ask Pinpoint", actions, intro, composerTop, plac
             }}
             disabled={loading}
             rows={1}
-            placeholder={loading ? "Waiting for the answer…" : (placeholder ?? (messages.length ? "Ask a follow-up or a new question" : "Ask how something works"))}
+            placeholder={loading ? "Waiting for the answer…" : (messages.length ? "Ask a follow-up or a new question" : "Ask how something works")}
             aria-label="Your question"
             className="max-h-40 min-h-11 flex-1 resize-none [field-sizing:content] rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-[15px] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:disabled:bg-zinc-800"
           />
@@ -186,7 +164,6 @@ function MessageView({
     return (
       <div className="ml-auto flex max-w-[85%] flex-col items-end gap-1">
         <div className="whitespace-pre-wrap rounded-2xl rounded-br-sm bg-blue-600 px-4 py-2.5 text-[15px] text-white">{message.text}</div>
-        {message.note && <span className="font-mono text-[11px] text-zinc-500">{message.note}</span>}
       </div>
     );
   }

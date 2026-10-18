@@ -20,7 +20,6 @@ From one question to an answer, the right person and a booked meeting in about a
 
 It also shows up where people already work:
 - **In Slack `#help`,** it answers new questions in the thread on its own: a cited answer, who knows the topic and how booked they are. React ✅ and the thread is saved as a known answer for the next new hire.
-- **In the code,** a floating bubble shows who knows the file you're reading and answers questions about the lines you select.
 - **For managers,** a graph of people and topics has a bus factor view that flags knowledge held by one person.
 
 **What the agent does on its own:** searching, answering, ranking experts, checking availability, drafting messages, finding free times, and answering in `#help`.
@@ -70,7 +69,7 @@ Most of our challenges were trust problems, and each one shaped a rule:
 - **The demo story came out of real data.** We didn't script "Marcus reviewed 38 of Dana's PRs and has time"; the public repo's history produced it, and the approved DM really lands on a phone.
 - **Trust is enforced in code, not hoped for in a prompt.** Every rule above has a test, including 29 "golden" tests that fail if the demo's answers, sources or recommendations drift.
 - **The reasoning is visible at every step:** citations on every claim, evidence and availability on every recommendation, and the full draft before anything is sent.
-- **It meets people where they are:** the app, Slack, and the code they're reading.
+- **It meets people where they already ask:** in the app and in Slack `#help`.
 
 ## What we learned
 

@@ -45,7 +45,6 @@ About 3½ minutes. Every beat shows the agent **doing** something, and the human
 
 **Spare beats if there's time**
 - **How are subscriptions and plan upgrades billed?** Same pipeline, different expert: Isabel Moreno (60 Billing PRs, about 34% booked) is Recommended.
-- **The code bubble:** open **localhost:3000/code**, click line **80**, shift-click line **84**, click **Ask Pinpoint about this**, type **Why does the cron skip channels with an active webhook?** "Pinpoint also lives where engineers already are. The bubble knows the file and the selected lines": it explains why active webhooks skip the cron (PR #26180, Dana's #help thread) and recommends Marcus. Then click **Show in graph**: the graph opens on Messaging with the same chat beside it. `warm_demo` caches this exact question with lines 80 to 84 selected (and the bubble's suggestion chip), so select exactly those lines.
 - **whats pr 28080**: it pulls that exact PR, explains it, and recommends the author (Isabel) and a reviewer (Lena).
 
 ## What judges should see, beat by beat
@@ -56,7 +55,7 @@ About 3½ minutes. Every beat shows the agent **doing** something, and the human
 | New hire relevance (20%) | Beat 1 framing; the DM opens "I'm Priya, new on Integrations"; the saved answer helps the *next* new hire |
 | Responsible AI (20%) | Citations (3), visible evidence and availability (4), corrections (4), approval before sending or booking (5, 7), public channels only and scores that never rate people (10) |
 | Future of work (15%) | Bus factor for managers (9); spreading questions grows second experts; Workday as the org data source (10) |
-| UX (10%) | One question to a booked meeting in about a minute; plain language; works in the app, in Slack and in the code bubble |
+| UX (10%) | One question to a booked meeting in about a minute; plain language; works in the app and in Slack |
 
 ## If something breaks
 
