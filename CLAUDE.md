@@ -18,6 +18,10 @@ Hackathon project. Challenge: build an AI agent that helps people succeed after 
 6. It finds mutual free slots and books a meeting; the user approves, and it writes the meeting.
 7. A graph view shows people and topics; a bus factor mode flags topics with only one expert.
 
+## Team
+
+Two lanes: backend (`backend/`) and frontend + Slack + demo (`frontend/`, Slack app). See `docs/team.md` for who owns what and the order of work. Stay in your lane's folder; API shape changes update `schema.py`, `types.ts` and `fixtures/` together in one commit.
+
 ## Repo layout
 
 ```
