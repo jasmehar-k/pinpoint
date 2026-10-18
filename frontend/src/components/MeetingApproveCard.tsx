@@ -48,11 +48,11 @@ export function MeetingApproveCard({ action, availability }: { action: MeetingAc
     <CardShell
       id={`action-${action.id}`}
       label={`Meeting: ${title}`}
-      title={title}
-      aside="30 min · times in Pacific"
+      title={<span className="font-semibold">{title}</span>}
+      aside={<span className="text-xs text-zinc-500">30 min · times in Pacific</span>}
       dismissed={state.phase === "dismissed" ? "Dismissed. No meeting was booked." : null}
     >
-      <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-zinc-600">
         {attendees.map(nameFromId).join(" and ")}
         {availability && (
           <span className="text-zinc-500">
