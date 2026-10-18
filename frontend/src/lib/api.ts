@@ -7,6 +7,7 @@ import type {
   ChatRequest,
   ChatResponse,
   ExpertsResponse,
+  GraphResponse,
   Health,
   PendingAction,
   RewriteRequest,
@@ -59,6 +60,10 @@ function call<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getHealth(): Promise<Health> {
   return USE_FIXTURES ? fixture("health.json") : call("/health");
+}
+
+export function getGraph(): Promise<GraphResponse> {
+  return USE_FIXTURES ? fixture("graph.json") : call("/graph");
 }
 
 export function getExperts(q: string, user?: string): Promise<ExpertsResponse> {

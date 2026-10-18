@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { timeAgo } from "@/lib/time";
 import { displayTitle } from "@/lib/titles";
 import type { Availability, EventType, Expert } from "@/lib/types";
 
 import { SourceLink } from "./CitedText";
+import { useGraphFocus } from "./graphFocus";
 
 const TEAM_COLOR: Record<string, string> = {
   Integrations: "bg-violet-600",
@@ -55,6 +56,22 @@ function initialsOf(name: string): string {
 export function ExpertCard({ expert, compact = false, onDraft, onBook, disabled }: { expert: Expert; compact?: boolean } & Actions) {
   const [expanded, setExpanded] = useState(!compact);
   const recommended = expert.badge === "recommended";
+  // Linked with the graph: hovering the card lights the person there; clicking the person in
+  // the graph rings this card and scrolls the latest one into view.
+  const { person, setPerson } = useGraphFocus();
+  const ref = useRef<HTMLElement>(null);
+  const highlighted = person?.id === expert.person_id;
+  const fromGraph = highlighted && person.from === "graph";
+  useEffect(() => {
+    if (fromGraph) ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [fromGraph]);
+  const link = {
+    ref,
+    "data-highlighted": highlighted || undefined,
+    onMouseEnter: () => setPerson({ id: expert.person_id, from: "chat" }),
+    onMouseLeave: () => person?.from === "chat" && setPerson(null),
+  };
+  const ring = fromGraph ? " shadow-[0_0_0_3px_rgba(37,99,235,0.35)]" : "";
   const avatar = (size: string) => (
     <span
       aria-hidden
@@ -67,7 +84,7 @@ export function ExpertCard({ expert, compact = false, onDraft, onBook, disabled 
   if (!expanded) {
     const booked = expert.availability ? `${Math.round(expert.availability.booked_pct * 100)}% booked` : null;
     return (
-      <article aria-label={expert.name} className="rounded-xl border border-zinc-200 bg-white">
+      <article aria-label={expert.name} {...link} className={`rounded-xl border border-zinc-200 bg-white${ring}`}>
         <button onClick={() => setExpanded(true)} aria-expanded={false} className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-zinc-50">
           {avatar("size-9")}
           <div className="min-w-0 flex-1">
@@ -88,7 +105,8 @@ export function ExpertCard({ expert, compact = false, onDraft, onBook, disabled 
   return (
     <article
       aria-label={expert.name}
-      className={`rounded-xl border bg-white p-4 ${recommended ? "border-blue-600 ring-1 ring-blue-600" : "border-zinc-200"}`}
+      {...link}
+      className={`rounded-xl border bg-white p-4 ${recommended ? "border-blue-600 ring-1 ring-blue-600" : "border-zinc-200"}${ring}`}
     >
       <header className="flex items-start gap-3">
         {avatar("size-10")}
