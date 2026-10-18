@@ -11,22 +11,49 @@ import type {
   PendingAction,
 } from "./types";
 
-const USE_FIXTURES = process.env.NEXT_PUBLIC_USE_FIXTURES !== "0";
+export const USE_FIXTURES = process.env.NEXT_PUBLIC_USE_FIXTURES !== "0";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
-async function fixture<T>(name: string): Promise<T> {
-  const res = await fetch(`/fixtures/${name}`);
-  if (!res.ok) throw new Error(`fixture ${name}: ${res.status}`);
+// status 0 = the request never got a response (backend down, network, CORS).
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function request<T>(url: string, init?: RequestInit): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(url, init);
+  } catch {
+    throw new ApiError(USE_FIXTURES ? "couldn't load the example data" : `can't reach the backend at ${API_URL}`, 0);
+  }
+  if (!res.ok) {
+    // FastAPI errors look like {"detail": "..."} or, for validation, {"detail": [{msg, ...}]}.
+    let message = `${url.replace(API_URL, "")} returned ${res.status}`;
+    try {
+      const { detail } = await res.json();
+      if (typeof detail === "string") message = detail;
+      else if (Array.isArray(detail) && detail[0]?.msg) message = detail[0].msg;
+    } catch {}
+    throw new ApiError(message, res.status);
+  }
   return res.json();
 }
 
-async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+function fixture<T>(name: string): Promise<T> {
+  return request(`/fixtures/${name}`);
+}
+
+function call<T>(path: string, init?: RequestInit): Promise<T> {
+  return request(`${API_URL}${path}`, {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
-  if (!res.ok) throw new Error(`${path}: ${res.status}`);
-  return res.json();
 }
 
 export function getHealth(): Promise<Health> {
