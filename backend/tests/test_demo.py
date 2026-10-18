@@ -254,3 +254,10 @@ def test_failed_booking_can_be_retried_with_another_slot(conn, cleanup):
     assert retry.status == "executed", retry.result
     cleanup.append(("meeting", retry.result["meeting_id"]))
     assert _actions.approve(conn, action.id).result == retry.result  # and now it's done for good
+
+
+def test_search_can_leave_out_an_artifact(conn):
+    from search import search_artifacts
+    top = search_artifacts(conn, "How does inbound email sync work?", k=3)
+    rest = search_artifacts(conn, "How does inbound email sync work?", k=3, exclude=(top[0].id,))
+    assert top[0].id not in {h.id for h in rest} and rest[0].id == top[1].id

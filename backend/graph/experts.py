@@ -148,12 +148,12 @@ def _reviewed_of(conn, author_id: str, reviewer_ids: list[str], topic_id: str) -
 
 
 def find_experts(conn, query: str, asker_id: str | None = None, now: datetime | None = None,
-                 limit: int = MAX_EXPERTS) -> list[Expert]:
+                 limit: int = MAX_EXPERTS, exclude: tuple[str, ...] = ()) -> list[Expert]:
     now = now or datetime.now(UTC)
     people = people_by_id()
-    hits = relevant(search_artifacts(conn, query, k=TOP_ARTIFACTS))
-    exclude = {asker_id} if asker_id else set()
-    ranked = rank_candidates(hits, _events_on(conn, [h.id for h in hits]), now, exclude)[:limit]
+    hits = relevant(search_artifacts(conn, query, k=TOP_ARTIFACTS, exclude=exclude))
+    not_experts = {asker_id} if asker_id else set()
+    ranked = rank_candidates(hits, _events_on(conn, [h.id for h in hits]), now, not_experts)[:limit]
     if not ranked:
         return []
 

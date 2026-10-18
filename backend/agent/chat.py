@@ -21,7 +21,7 @@ from agent.compose import (SYSTEM, build_prompt, cite_mentioned_prs, cite_top_so
 from graph.availability import get_availability
 from graph.experts import apply_availability, find_experts, topic_label
 from org import load_org, people_by_id
-from schema import (ChatReply, ChatRequest, ChatResponse, Citation, Expert, ScheduleMeetingPayload,
+from schema import (ChatReply, ChatRequest, ChatResponse, Citation, Expert, Person, ScheduleMeetingPayload,
                     SendMessagePayload)
 from search import Hit, search_artifacts
 
@@ -93,11 +93,25 @@ def _citations(hits: list[Hit], order: list[int]) -> list[Citation]:
             for n, i in enumerate(order, 1)]
 
 
-def _question(conn, convo: Conversation, question: str, now: datetime, client) -> ChatResponse:
+@dataclass
+class Answered:
+    """A question run through search -> experts -> availability -> LLM, with the rules applied.
+    Shared by the chat and the #help bot."""
+
+    text: str  # the cited answer, no names
+    citations: list[Citation]
+    experts: list[Expert]
+    routing: str  # code-written "who to ask" sentence
+    contact: Expert | None  # who a DM should go to
+    dm: str  # LLM draft for `contact`, unchecked; may be empty
+
+
+def answer_question(conn, question: str, asker: Person, now: datetime, client=None,
+                    exclude: tuple[str, ...] = ()) -> Answered:
+    """`exclude`: artifacts not to use, e.g. the Slack thread being answered (no self-citation)."""
     people = people_by_id()
-    asker = people[convo.user]
-    hits = answer_sources(search_artifacts(conn, question, k=ANSWER_SOURCES * 3))
-    experts = find_experts(conn, question, asker_id=convo.user, now=now)
+    hits = answer_sources(search_artifacts(conn, question, k=ANSWER_SOURCES * 3, exclude=exclude))
+    experts = find_experts(conn, question, asker_id=asker.id, now=now, exclude=exclude)
     if experts:
         avail = get_availability(conn, [e.person_id for e in experts], now)
         experts = apply_availability(experts, avail.people)[:EXPERTS_SHOWN]
@@ -118,13 +132,20 @@ def _question(conn, convo: Conversation, question: str, now: datetime, client) -
             answer, order = cite_top_sources(answer, len(hits))
     else:
         answer, order = fallback_answer(hits)
+    return Answered(answer, _citations(hits, order), experts, routing, contact, (reply or {}).get("dm") or "")
 
-    convo.question, convo.experts = question, experts
-    convo.topic = experts[0].topic if experts else None
+
+def _question(conn, convo: Conversation, question: str, now: datetime, client) -> ChatResponse:
+    people = people_by_id()
+    asker = people[convo.user]
+    a = answer_question(conn, question, asker, now, client)
+
+    convo.question, convo.experts = question, a.experts
+    convo.topic = a.experts[0].topic if a.experts else None
     pending = []
-    if recipient:
-        dm = (reply or {}).get("dm") or ""
-        dm = drop_unlisted_people(dm, load_org().people, {asker.id, recipient.id})
+    if a.contact:
+        recipient = people[a.contact.person_id]
+        dm = drop_unlisted_people(a.dm, load_org().people, {asker.id, recipient.id})
         if len(dm) < 40:
             dm = fallback_dm(asker, recipient, question, convo.topic)
         dm = tidy_dm(dm, recipient)
@@ -132,8 +153,8 @@ def _question(conn, convo: Conversation, question: str, now: datetime, client) -
         convo.contact = recipient.id
 
     return ChatResponse(conversation_id=convo.id,
-                        reply=ChatReply(text=f"{answer}\n\n{routing}", citations=_citations(hits, order)),
-                        experts=experts, pending_actions=pending)
+                        reply=ChatReply(text=f"{a.text}\n\n{a.routing}", citations=a.citations),
+                        experts=a.experts, pending_actions=pending)
 
 
 def _schedule(conn, convo: Conversation, message: str, now: datetime) -> ChatResponse:

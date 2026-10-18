@@ -20,7 +20,8 @@ class Hit:
     topics: list[str] = field(default_factory=list)
 
 
-def search_artifacts(conn, query: str, k: int = 20) -> list[Hit]:
+def search_artifacts(conn, query: str, k: int = 20, exclude: tuple[str, ...] = ()) -> list[Hit]:
+    """`exclude`: artifact ids to leave out, e.g. the thread being answered."""
     vec = embed_query(query)
     rows = conn.execute(
         """
@@ -29,11 +30,11 @@ def search_artifacts(conn, query: str, k: int = 20) -> list[Hit]:
                coalesce(array_agg(t.topic_id) filter (where t.topic_id is not null), '{}')
         from artifacts a
         left join artifact_topics t on t.artifact_id = a.id
-        where a.embedding is not null
+        where a.embedding is not null and a.id <> all(%(exclude)s)
         group by a.id
         order by a.embedding <=> %(v)s
         limit %(k)s
         """,
-        {"v": vec, "k": k, "n": SNIPPET_CHARS},
+        {"v": vec, "k": k, "n": SNIPPET_CHARS, "exclude": list(exclude)},
     ).fetchall()
     return [Hit(*row) for row in rows]

@@ -107,3 +107,13 @@ create table if not exists user_profiles (
     started_on date not null,
     interests  text[] not null default '{}'
 );
+
+-- #help fast path: one row per question the bot answered, so restarts never reply twice
+-- and reset_demo can delete the replies from Slack.
+create table if not exists slack_replies (
+    channel_id  text not null,
+    message_ts  text not null,
+    reply_ts    text,
+    created_at  timestamptz not null default now(),
+    primary key (channel_id, message_ts)
+);

@@ -58,6 +58,7 @@ uv run python -m scripts.score            # rebuild the expertise table
 uv run python -m scripts.gen_meetings     # demo-week calendars + open review counts
 uv run python -m scripts.reset_demo [--keep-slack]   # between rehearsals: deletes Pinpoint's Slack DMs, actions, booked meetings; regenerates calendars. Restart the API after
 uv run python -m scripts.warm_demo        # runs seed/demo_questions.py so answers are in the LLM cache
+uv run python -m scripts.help_bot [--once] [--since-minutes N]   # #help fast path: polls every 30s, replies in-thread; dry run unless PINPOINT_MODE=live
 ```
 
 LLM answers are cached on disk by exact prompt (`backend/data/llm_cache/`), so warmed demo questions answer in about a second and survive OpenRouter outages. The cache matches exact question text: `seed/demo_questions.py` must contain the frontend's `SUGGESTED_QUESTIONS` word for word (a test checks). Chat LLM calls time out after `LLM_TIMEOUT` (30s, no retries) and fall back to a code-written answer; seeding and tagging use `llm.batch_client()` (5 min, 2 retries). DB access goes through a small connection pool (`db.py`): opening a Supabase connection costs ~0.6s. Delete that folder to force fresh answers. The API reads `.env` only at startup: restart it after changing `PINPOINT_MODE`.
