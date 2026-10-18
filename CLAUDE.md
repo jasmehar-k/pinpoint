@@ -36,7 +36,31 @@ Keep this layout unless there's a strong reason to change it.
 
 ## Commands
 
-Nothing is scaffolded yet. The repo holds only this file, `README.md`, and a Python `.gitignore`. When you add the backend, the frontend, or the `scripts/` entry points, record the real commands here: install, run the API, run the frontend, run all tests, run a single test, and run each pipeline step.
+Backend (Python 3.13, managed with `uv`; run from `backend/`, which is the import root, so modules import as `from schema import Event`):
+
+```
+uv sync                                   # install
+uv run uvicorn api.main:app --reload      # API on :8000
+uv run pytest                             # all tests
+uv run pytest tests/test_topics.py::test_known_paths   # one test
+uv run python -m scripts.init_db          # apply schema.sql (idempotent)
+uv run python -m scripts.load_people      # upsert people.json + topics
+```
+
+Pipeline steps go in `backend/scripts/` as `python -m scripts.<step>`.
+
+Frontend (Next.js 16, run from `frontend/`):
+
+```
+npm install
+npm run dev        # :3000
+npm run lint
+npx tsc --noEmit
+```
+
+Next 16 has breaking changes vs older versions. Read `frontend/AGENTS.md` and the bundled docs in `frontend/node_modules/next/dist/docs/` before writing frontend code.
+
+Fixtures: `frontend/public/fixtures` is a symlink to `/fixtures`. Fixture mode is on unless `NEXT_PUBLIC_USE_FIXTURES=0` (set in `frontend/.env.local`; Next doesn't read the root `.env`). All API calls go through `frontend/src/lib/api.ts`. `frontend/src/lib/types.ts` mirrors `backend/schema.py`, and `backend/tests/test_fixtures.py` fails if a fixture drifts from its model. When you change an API shape, update the model, the TS type and the fixture together.
 
 ## Stack
 
@@ -122,7 +146,12 @@ Event {
 }
 ```
 
-Tables: `people`, `topics`, `artifacts`, `events`, `expertise`, `meetings`, `pending_actions`, `corrections`, `user_profiles`.
+Tables: `people`, `topics`, `artifacts`, `events`, `expertise`, `meetings`, `pending_actions`, `corrections`, `user_profiles`, plus `artifact_topics` (artifact to topic, from paths or LLM tags). DDL is `backend/schema.sql`. Notes:
+- An event's text lives on its artifact (embedding `vector(1024)`; change the dimension if the embedding model differs).
+- `meetings` uses `start_at`/`end_at` (`end` is reserved) and a `seeded` flag; `reset_demo` deletes rows with `seeded = false`.
+- `people.open_reviews` is seeded by `gen_meetings`.
+- `people.slack_user_id` set = real Slack DM; null = simulated send (`result.delivery = "simulated"`).
+- Seeded Slack threads have no real URL; their evidence links are `/artifacts/{id}`, rendered by the frontend.
 
 ```
 Meeting { id, title, attendees[person_id], start, end, recurring }
