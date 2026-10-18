@@ -41,5 +41,5 @@ Spare question if there's time: **How do workflow triggers and actions run?** El
 ## If something breaks
 
 - **The answer is slow ("Still digging through PRs and threads…"):** the question isn't cached. Keep talking; after 30s a code-written answer appears with the same experts and citations. Next time, rerun `warm_demo`.
-- **The DM says "Simulated":** `PINPOINT_MODE` isn't `live` or `SLACK_BOT_TOKEN` is missing. Keep going and say the send is simulated for the demo.
-- **"Couldn't get an answer: can't reach the backend":** restart uvicorn. If it won't come back, switch to fixtures: set `NEXT_PUBLIC_USE_FIXTURES=1` in `frontend/.env.local`, restart `npm run dev`, and run steps 1 to 6 only. In fixture mode every question gets the email-sync answer, so skip step 7.
+- **The card says "Sent" but nothing arrives on the phone:** simulated and real sends look the same in the app, so the phone is the only check. `PINPOINT_MODE` isn't `live` or `SLACK_BOT_TOKEN` is missing. Keep going and say the send is simulated for the demo.
+- **"Couldn't get an answer: Pinpoint can't connect right now":** the backend is down; restart uvicorn. If it won't come back, switch to fixtures: set `NEXT_PUBLIC_USE_FIXTURES=1` in `frontend/.env.local`, restart `npm run dev`, and run steps 1 to 6 only. In fixture mode every question gets the email-sync answer, so skip step 7.
