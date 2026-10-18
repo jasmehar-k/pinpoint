@@ -27,7 +27,7 @@ About 3 minutes. Harshita drives the laptop as Priya Shah (new hire, Integration
 | # | Do | Say / point at |
 | --- | --- | --- |
 | 1 | Click **How does inbound email sync work?** | "Priya joined Integrations three days ago." New hires lose days figuring out who to ask. |
-| 2 | Click citation chip **1** | Every claim links to its source: PR #26180 opens in a new tab. Come back to the chat tab. |
+| 2 | Click citation chip **2** | Every claim links to its source: PR #26180 opens in a new tab. Come back to the chat tab. (Chip 1 is the #help thread where Dana explained it.) |
 | 3 | Scroll to the expert cards | Dana wrote most of this (128 Messaging PRs) but is 78% booked; Victor 84%. Marcus reviewed 38 of Dana's Messaging PRs and is 35% booked, so he's Recommended. |
 | 4 | Change a word in the draft (it opens "I'm Priya, new on Integrations"), click **Approve and send** | Nothing is sent until you approve. **Hold up the phone: the DM from Pinpoint, on behalf of Priya, has arrived.** |
 | 5 | Type **Can you book time with Marcus on Wednesday at 10:30am?** | It finds times you're both free. Wed 10:30 is preselected. |
