@@ -9,6 +9,8 @@ Two lanes, split by folder so we almost never edit the same files.
 
 Shared files: `fixtures/`, `people.json`, `CLAUDE.md`, `.env.example`. Pull before editing them and keep those commits small.
 
+**Branches:** one short-lived branch per piece of work (`backend/embeddings`, `frontend/expert-cards`). Merge into `main` as soon as it works and tests pass, then pull `main` before starting the next branch. Merge often; long-lived branches are where conflicts come from.
+
 ## The contract between lanes
 
 The frontend builds against `/fixtures` and never waits on the backend. The API shape lives in three places that change together, in one commit, by whoever changes the shape:
