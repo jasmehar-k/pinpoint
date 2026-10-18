@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { timeAgo } from "@/lib/time";
+import { displayTitle } from "@/lib/titles";
 import type { Availability, EventType, Expert } from "@/lib/types";
 
 import { SourceLink } from "./CitedText";
@@ -82,7 +83,7 @@ export function ExpertCard({ expert }: { expert: Expert }) {
                 title={ev.title}
                 className="line-clamp-2 min-w-0 text-zinc-700 hover:underline sm:flex-1 dark:text-zinc-300"
               >
-                {ev.title}
+                {displayTitle(ev.title)}
               </SourceLink>
               <span className="shrink-0 text-xs text-zinc-500">
                 <span className="sm:hidden">{EVIDENCE_VERB[ev.type]} · </span>
