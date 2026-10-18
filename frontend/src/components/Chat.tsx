@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { sendChat } from "@/lib/api";
 import { DEMO_USER, SUGGESTED_QUESTIONS } from "@/lib/demo";
-import type { ChatResponse } from "@/lib/types";
+import { firstName } from "@/lib/people";
+import type { ChatResponse, Expert } from "@/lib/types";
 
 import { CitedText, SourceChips } from "./CitedText";
 import { DmApproveCard } from "./DmApproveCard";
@@ -68,8 +69,8 @@ export function Chat() {
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-4 px-4 py-5 sm:px-5">
           {messages.length === 0 && <EmptyState onPick={ask} />}
-          {messages.map((m) => (
-            <MessageView key={m.id} message={m} onRetry={ask} />
+          {messages.map((m, i) => (
+            <MessageView key={m.id} message={m} onAsk={ask} busy={loading} shownBefore={expertsShownBefore(messages, i)} />
           ))}
           {loading && <Thinking />}
           <div ref={bottom} />
@@ -107,7 +108,26 @@ export function Chat() {
   );
 }
 
-function MessageView({ message, onRetry }: { message: Message; onRetry: (q: string) => void }) {
+// Person ids that appeared on expert cards in replies before index i.
+function expertsShownBefore(messages: Message[], i: number): Set<string> {
+  const ids = new Set<string>();
+  for (const m of messages.slice(0, i)) {
+    if (m.role === "assistant") for (const e of m.response.experts ?? []) ids.add(e.person_id);
+  }
+  return ids;
+}
+
+function MessageView({
+  message,
+  onAsk,
+  busy,
+  shownBefore,
+}: {
+  message: Message;
+  onAsk: (q: string) => void;
+  busy: boolean;
+  shownBefore: Set<string>;
+}) {
   if (message.role === "user") {
     return (
       <div className="ml-auto max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-blue-600 px-4 py-2.5 text-[15px] text-white">
@@ -119,24 +139,42 @@ function MessageView({ message, onRetry }: { message: Message; onRetry: (q: stri
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
         Couldn&apos;t get an answer: {message.text}{" "}
-        <button onClick={() => onRetry(message.retry)} className="font-medium underline">
+        <button onClick={() => onAsk(message.retry)} className="font-medium underline">
           Try again
         </button>
       </div>
     );
   }
-  const { reply, experts = [], pending_actions = [], availability } = message.response;
+  const { reply, pending_actions = [], availability } = message.response;
+  // A follow-up reply (no citations, e.g. "Here's a draft to Marcus instead.") repeats the
+  // expert it's about; skip cards for people already shown. New answers keep their full list.
+  const isFollowUp = reply.citations.length === 0;
+  const experts = (message.response.experts ?? []).filter((e) => !(isFollowUp && shownBefore.has(e.person_id)));
   // With experts, the backend's last paragraph is its code-written routing line ("Dana knows
   // this best but…"). It reads better after the cards, as in the mockup.
   const paragraphs = reply.text.split(/\n{2,}/);
   const routing = experts.length > 0 && paragraphs.length > 1 ? paragraphs.pop() : null;
+
+  // Expert card buttons become follow-up questions the backend already understands. If a draft
+  // to that person is still open in this reply, jump to it instead of asking for another.
+  function draft(expert: Expert) {
+    const open = pending_actions.find((a) => a.kind === "send_message" && a.payload.to === expert.person_id);
+    const box = open && document.querySelector<HTMLTextAreaElement>(`#action-${open.id} textarea`);
+    if (box) {
+      box.scrollIntoView({ behavior: "smooth", block: "center" });
+      box.focus({ preventScroll: true });
+      return;
+    }
+    onAsk(`Draft a message to ${firstName(expert.person_id)}`);
+  }
+  const book = (expert: Expert) => onAsk(`Book time with ${firstName(expert.person_id)} this week`);
   return (
     <div className="flex flex-col gap-3">
       <div data-answer className="text-[15px] leading-relaxed">
         <CitedText text={paragraphs.join("\n\n")} citations={reply.citations} />
         <SourceChips citations={reply.citations} />
       </div>
-      <ExpertList experts={experts} />
+      <ExpertList experts={experts} onDraft={draft} onBook={book} disabled={busy} />
       {routing && <p className="text-[15px] leading-relaxed">{routing}</p>}
       {pending_actions.map((a) =>
         a.kind === "send_message" ? (
