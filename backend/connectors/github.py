@@ -108,13 +108,16 @@ _NOISE = [
     re.compile(r"<!--.*?-->", re.S),             # template comments
     re.compile(r"<img[^>]*>", re.I),             # html images
     re.compile(r"!\[[^\]]*\]\([^)]*\)"),         # markdown images
-    re.compile(r"</?(details|summary|p|br|div)[^>]*>", re.I),
+    re.compile(r"<source[^>]*>", re.I),          # review-bot buttons (<a><source></a>)
+    re.compile(r"</?(details|summary|p|br|div|picture)[^>]*>", re.I),
 ]
+_LINK = re.compile(r"<a\b[^>]*>(.*?)</a>", re.I | re.S)  # keep link text, drop the tag
 
 
 def clean_body(body: str) -> str:
     for pattern in _NOISE:
         body = pattern.sub("", body)
+    body = _LINK.sub(r"\1", body)
     body = re.sub(r"[ \t]+\n", "\n", body)
     return re.sub(r"\n{3,}", "\n\n", body).strip()
 

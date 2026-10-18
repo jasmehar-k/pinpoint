@@ -77,3 +77,13 @@ def test_clean_body_strips_template_noise():
         "<details><summary>Logs</summary>trace</details>"
     )
     assert clean_body(body) == "## Summary\n\nFixes sync.\n\nLogstrace"
+
+
+def test_clean_body_strips_review_bot_buttons_but_keeps_link_text():
+    body = (
+        "Fixes the cron.\n\n"
+        '<a href="https://cubic.dev/pr/1" target="_blank"><source media="(prefers-color-scheme: dark)" '
+        'srcset="https://x/dark.svg"><source srcset="https://x/light.svg"></a>\n\n'
+        'See <a href="https://docs/x">the docs</a>.'
+    )
+    assert clean_body(body) == "Fixes the cron.\n\nSee the docs."
