@@ -13,6 +13,8 @@ QUESTIONS = [
     # typed during the demo
     "How do I ship a hotfix before the release train?",
     "Why would an IMAP mailbox sync but import nothing?",
+    # posted in #help during the demo; the bot answers it in-thread
+    "who's the best person to ask about IMAP sync? new here",
 ]
 
 FOLLOW_UPS = [
