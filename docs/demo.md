@@ -28,11 +28,12 @@ About 3 minutes. Harshita drives the laptop as Priya Shah (new hire, Integration
 | --- | --- | --- |
 | 1 | Click **How does inbound email sync work?** | "Priya joined Integrations three days ago." New hires lose days figuring out who to ask. |
 | 2 | Click citation chip **2** | Every claim links to its source: PR #26180 opens in a new tab. Come back to the chat tab. (Chip 1 is the #help thread where Dana explained it.) |
-| 3 | Scroll to the expert cards | Dana wrote most of this (128 Messaging PRs) but is 78% booked; Victor 84%. Marcus reviewed 38 of Dana's Messaging PRs and is 35% booked, so he's Recommended. |
+| 3 | Scroll to the expert cards; point at the graph | Dana wrote most of this (128 Messaging PRs) but is 78% booked; Victor 84%. Marcus reviewed 38 of Dana's Messaging PRs and is 35% booked, so he's Recommended. The graph has focused Messaging and ranks its people by expertise alone: Marcus is third there, first in the chat because he has time. Hover a card to find that person in the graph. |
 | 4 | Change a word in the draft (it opens "I'm Priya, new on Integrations"), click **Approve and send** | Nothing is sent until you approve. **Hold up the phone: the DM from Pinpoint, on behalf of Priya, has arrived.** |
 | 5 | Type **Can you book time with Marcus on Wednesday at 10:30am?** | It shows both calendars for the week and three slots you're both free. Wed 10:30 is preselected. |
 | 6 | Click **Book Wed 10:30 AM** | Booked and on both calendars. |
 | 7 | Type **How are subscriptions and plan upgrades billed?** | Same pipeline, different expert: Isabel Moreno (60 Billing PRs, 34% booked) is Recommended. |
+| 7b | Click **Bus factor** above the graph | Red topics have one expert: Messaging (Dana), Billing (Isabel), Metadata and Frontend (both Victor, who is 84% booked). The at-risk list names who's next closest. |
 | 8 | Close | "We only read public channels the bot is invited to, and anyone can opt out." |
 
 Spare question if there's time: **How do workflow triggers and actions run?** Elena Petrova knows it best but is 70% booked, so Ken Watanabe, who reviewed 17 of her Workflow PRs, is Recommended.
@@ -40,5 +41,5 @@ Spare question if there's time: **How do workflow triggers and actions run?** El
 ## If something breaks
 
 - **The answer is slow ("Still digging through PRs and threads…"):** the question isn't cached. Keep talking; after 30s a code-written answer appears with the same experts and citations. Next time, rerun `warm_demo`.
-- **The DM says "Simulated":** `PINPOINT_MODE` isn't `live` or `SLACK_BOT_TOKEN` is missing. Keep going and say the send is simulated for the demo.
-- **"Couldn't get an answer: can't reach the backend":** restart uvicorn. If it won't come back, switch to fixtures: set `NEXT_PUBLIC_USE_FIXTURES=1` in `frontend/.env.local`, restart `npm run dev`, and run steps 1 to 6 only. In fixture mode every question gets the email-sync answer, so skip step 7.
+- **The card says "Sent" but nothing arrives on the phone:** simulated and real sends look the same in the app, so the phone is the only check. `PINPOINT_MODE` isn't `live` or `SLACK_BOT_TOKEN` is missing. Keep going and say the send is simulated for the demo.
+- **"Couldn't get an answer: Pinpoint can't connect right now":** the backend is down; restart uvicorn. If it won't come back, switch to fixtures: set `NEXT_PUBLIC_USE_FIXTURES=1` in `frontend/.env.local`, restart `npm run dev`, and run steps 1 to 6 only. In fixture mode every question gets the email-sync answer, so skip step 7.

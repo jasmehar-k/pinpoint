@@ -1,9 +1,10 @@
 import { Chat } from "@/components/Chat";
+import { GraphFocusProvider } from "@/components/graphFocus";
 import { GraphPanel } from "@/components/GraphPanel";
 import { Header } from "@/components/Header";
 
-// Off until GET /graph lands; an empty graph frame looks unfinished in a demo.
-const SHOW_GRAPH = false;
+// Off shows the chat alone, centered.
+const SHOW_GRAPH = true;
 
 // With the graph: graph on the left, chat on the right (below lg, chat only).
 // Without it: the chat panel centered at a readable width.
@@ -12,9 +13,11 @@ export default function Home() {
     <div className="flex h-dvh flex-col">
       <Header />
       {SHOW_GRAPH ? (
-        <main className="grid min-h-0 flex-1 gap-5 p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_minmax(400px,470px)] lg:p-6">
-          <GraphPanel />
-          <Chat />
+        <main className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)] gap-5 p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_minmax(400px,470px)] lg:p-6">
+          <GraphFocusProvider>
+            <GraphPanel />
+            <Chat />
+          </GraphFocusProvider>
         </main>
       ) : (
         <main className="flex min-h-0 flex-1 justify-center p-3 sm:p-4 lg:p-6">
