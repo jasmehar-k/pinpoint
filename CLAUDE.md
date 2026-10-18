@@ -122,8 +122,8 @@ Deploys and On-call have no code paths. Their experts come from Slack only. Abou
 
 Grounded in the last 6 months of Twenty history (3,853 squash-merged PRs, all titled `... (#N)`, so commit author = PR author):
 
-- **Dana Okafor = `neo773`**: authored 125 of 254 Messaging PRs, by far the top author.
-- **Marcus Lee = `charlesBochet`**: reviewed 12 of 45 sampled Dana messaging PRs, authored 26 Messaging PRs himself. Seed him at ~35% booked. Evidence line says "reviewed 12 of Dana's sync PRs", not "most".
+- **Dana Okafor = `neo773`**: authored 123 of 240 ingested Messaging PRs, by far the top author.
+- **Marcus Lee = `charlesBochet`**: reviewed 37 of Dana's 123 Messaging PRs (Victor reviewed 38; nobody else more than 14), authored 20 Messaging PRs himself. Seed him at ~35% booked. Evidence line says "reviewed 37 of Dana's Messaging PRs", not "most".
 - **`FelixMalfait` (founder) = a senior lead persona booked ~85%**. He scores #2 on Messaging and tops most other topics, so he must be busy or he swamps every recommendation. Demo line: top two experts are swamped, Marcus has time.
 - Exclude `CoreTeamTwenty` (shared account) and bots from people and scoring.
 - **Marcus's `slack_handle` maps to a real teammate**, so the approved DM really arrives. Sends to other fake personas are simulated: the action is marked sent and nothing reaches Slack.

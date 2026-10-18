@@ -9,7 +9,7 @@
       "topic": "messaging",
       "expertise": 5.4,
       "rank_score": 3.16,
-      "evidence_summary": "Reviewed 12 of Dana's sync PRs, authored 26 PRs in Messaging, active 2 days ago",
+      "evidence_summary": "Reviewed 37 of Dana's Messaging PRs, authored 20 PRs in Messaging, active 2 days ago",
       "evidence": [
         {"type": "reviewed", "title": "Sync message channels from webhooks without the cron hand-off (#26180)", "url": "https://github.com/twentyhq/twenty/pull/26180", "timestamp": "2026-08-04T14:12:00Z"},
         {"type": "reviewed", "title": "Load sync cron channels with one query per tick (#26181)", "url": "https://github.com/twentyhq/twenty/pull/26181", "timestamp": "2026-08-04T16:40:00Z"},
@@ -27,7 +27,7 @@
       "topic": "messaging",
       "expertise": 9.8,
       "rank_score": 1.51,
-      "evidence_summary": "Authored 125 PRs in Messaging, answered 14 questions, active 1 day ago",
+      "evidence_summary": "Authored 123 PRs in Messaging, answered 14 questions, active 1 day ago",
       "evidence": [
         {"type": "authored", "title": "Stop duplicating Gmail sent emails when sync fetches them again (#27688)", "url": "https://github.com/twentyhq/twenty/pull/27688", "timestamp": "2026-10-09T11:20:00Z"},
         {"type": "authored", "title": "Sync message channels from webhooks without the cron hand-off (#26180)", "url": "https://github.com/twentyhq/twenty/pull/26180", "timestamp": "2026-08-04T14:12:00Z"},
@@ -45,7 +45,7 @@
       "topic": "messaging",
       "expertise": 6.1,
       "rank_score": 0.5,
-      "evidence_summary": "Authored 35 PRs in Messaging, reviewed 13 of Dana's sync PRs, active today",
+      "evidence_summary": "Authored 31 PRs in Messaging, reviewed 38 of Dana's Messaging PRs, active today",
       "evidence": [
         {"type": "reviewed", "title": "Skip missing Microsoft messages instead of resetting the mailbox sync (#26107)", "url": "https://github.com/twentyhq/twenty/pull/26107", "timestamp": "2026-07-30T08:45:00Z"},
         {"type": "reviewed", "title": "Stop duplicating Gmail sent emails when sync fetches them again (#27688)", "url": "https://github.com/twentyhq/twenty/pull/27688", "timestamp": "2026-10-09T11:20:00Z"},

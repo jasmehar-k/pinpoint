@@ -24,7 +24,7 @@ BODY_CHARS = 2000
 QUERY = """
 query($q: String!, $after: String) {
   rateLimit { remaining resetAt }
-  search(query: $q, type: ISSUE, first: 50, after: $after) {
+  search(query: $q, type: ISSUE, first: 25, after: $after) {
     issueCount
     pageInfo { hasNextPage endCursor }
     nodes {
@@ -44,23 +44,31 @@ def _post(q: str, after: str | None) -> dict:
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         raise RuntimeError("GITHUB_TOKEN is not set.")
-    for attempt in range(4):
-        res = httpx.post(
-            "https://api.github.com/graphql",
-            json={"query": QUERY, "variables": {"q": q, "after": after}},
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=60,
-        )
-        if res.status_code in (502, 503, 504):
+    last_error: Exception | None = None
+    for attempt in range(5):
+        try:
+            res = httpx.post(
+                "https://api.github.com/graphql",
+                json={"query": QUERY, "variables": {"q": q, "after": after}},
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=90,
+            )
+            if res.status_code in (502, 503, 504):
+                raise httpx.HTTPStatusError(str(res.status_code), request=res.request, response=res)
+            res.raise_for_status()
+            # Large responses sometimes arrive truncated; that surfaces as a decode error.
+            body = res.json()
+        except (httpx.TransportError, httpx.HTTPStatusError, json.JSONDecodeError) as e:
+            if isinstance(e, httpx.HTTPStatusError) and e.response.status_code not in (502, 503, 504):
+                raise
+            last_error = e
+            print(f"  retrying after {type(e).__name__} (attempt {attempt + 1})")
             time.sleep(2 ** attempt)
             continue
-        res.raise_for_status()
-        body = res.json()
         if "errors" in body:
             raise RuntimeError(body["errors"])
         return body["data"]
-    res.raise_for_status()
-    raise RuntimeError("GitHub GraphQL kept failing")
+    raise RuntimeError(f"GitHub GraphQL kept failing: {last_error}")
 
 
 def _fetch_week(start: date, end: date) -> list[dict]:
