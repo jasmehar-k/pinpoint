@@ -98,7 +98,7 @@ def reuse_tags(artifacts: list[Artifact], existing: dict[str, tuple[str, list[st
 def tag_topics(threads: list[Artifact], client=None, model: str | None = None,
                batch_size: int = BATCH_SIZE, pause: float = 3.0) -> dict[str, list[str]]:
     """artifact id -> 1 to 3 topic ids (or [] for "other")."""
-    client = client or llm.client()
+    client = client or llm.batch_client()
     model = model or llm.model()
     tags = {}
     for i in range(0, len(threads), batch_size):

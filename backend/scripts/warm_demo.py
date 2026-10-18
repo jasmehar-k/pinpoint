@@ -4,6 +4,7 @@ working if OpenRouter is down). Cleans up the pending actions it creates.
     uv run python -m scripts.warm_demo
 """
 
+import os
 import time
 
 import db
@@ -13,6 +14,8 @@ from seed.demo_questions import FOLLOW_UPS, QUESTIONS, USER
 
 
 def main() -> None:
+    # Warming runs offline, so wait for slow answers instead of falling back (chat uses ~30s)
+    os.environ["LLM_TIMEOUT"] = "180"
     created = []
     with db.connect() as conn:
         for question in QUESTIONS:

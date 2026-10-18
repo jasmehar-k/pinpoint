@@ -62,7 +62,7 @@ def generate(prompt: str, n: int, people) -> list[dict] | None:
         return json.loads(path.read_text())
     for attempt in range(1, ATTEMPTS + 1):
         try:
-            res = llm.client().chat.completions.create(
+            res = llm.batch_client().chat.completions.create(
                 model=llm.model(), temperature=0.8,
                 messages=[{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
             )

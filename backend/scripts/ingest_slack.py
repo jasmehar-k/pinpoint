@@ -50,7 +50,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if not args.no_tag:
-        llm.client(), llm.model()  # fail now, not after fetching, if the LLM isn't configured
+        llm.batch_client(), llm.model()  # fail now, not after fetching, if the LLM isn't configured
 
     try:
         web = slack.client()

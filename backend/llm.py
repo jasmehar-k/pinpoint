@@ -13,12 +13,29 @@ import config  # noqa: F401  loads .env
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
-@cache
+def timeout() -> float:
+    """Seconds before a chat LLM call gives up and the code-written fallback answer takes over.
+    The SDK default is ~10 minutes with retries; one answer once took 135s."""
+    return float(os.getenv("LLM_TIMEOUT", "30"))
+
+
 def client() -> OpenAI:
+    """For chat: fails fast. No SDK retries, since a retry doubles the wait and the fallback
+    answer beats making someone wait."""
+    return _client(timeout(), 0)
+
+
+def batch_client() -> OpenAI:
+    """For offline jobs (seeding, tagging): seed batches take ~2 minutes, so wait and retry."""
+    return _client(300.0, 2)
+
+
+@cache
+def _client(seconds: float, retries: int) -> OpenAI:
     key = os.getenv("OPENROUTER_API_KEY")
     if not key:
         raise RuntimeError("OPENROUTER_API_KEY is not set. Copy .env.example to .env.")
-    return OpenAI(base_url=OPENROUTER_BASE_URL, api_key=key)
+    return OpenAI(base_url=OPENROUTER_BASE_URL, api_key=key, timeout=seconds, max_retries=retries)
 
 
 def model() -> str:

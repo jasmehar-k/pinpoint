@@ -49,3 +49,12 @@ def test_different_prompts_are_different_keys():
     llm.cached_chat(MSGS, validate=lambda s: s, client_=c)
     llm.cached_chat([{"role": "user", "content": "other"}], validate=lambda s: s, client_=c)
     assert c.calls == 2
+
+
+def test_chat_client_fails_fast_and_batch_client_waits(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    monkeypatch.setenv("LLM_TIMEOUT", "25")
+    llm._client.cache_clear()
+    chat, batch = llm.client(), llm.batch_client()
+    assert (chat.timeout, chat.max_retries) == (25.0, 0)
+    assert (batch.timeout, batch.max_retries) == (300.0, 2)
