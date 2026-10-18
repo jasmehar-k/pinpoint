@@ -11,7 +11,7 @@ import type {
   PendingAction,
 } from "./types";
 
-const USE_FIXTURES = process.env.NEXT_PUBLIC_USE_FIXTURES !== "0";
+export const USE_FIXTURES = process.env.NEXT_PUBLIC_USE_FIXTURES !== "0";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 async function fixture<T>(name: string): Promise<T> {
