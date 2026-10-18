@@ -43,7 +43,7 @@ export function Chat({ title = "Ask Pinpoint", actions, intro, composerTop, plac
   const nextId = useRef(0);
   const bottom = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { setTopic } = useGraphFocus();
+  const { setTopic, registerAsk } = useGraphFocus();
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -79,8 +79,10 @@ export function Chat({ title = "Ask Pinpoint", actions, intro, composerTop, plac
     }
   }
 
+  // The bubble passes its own handle; otherwise the shared one (used by the command palette).
   useEffect(() => {
     if (askRef) askRef.current = (q: string) => void ask(q);
+    else registerAsk((q: string) => void ask(q));
   });
 
   function onSubmit(e: FormEvent) {
