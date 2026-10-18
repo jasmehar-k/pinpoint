@@ -13,6 +13,7 @@ from embeddings import embed_query
 from graph.availability import get_availability
 from graph.experts import apply_availability, find_experts
 from graph.view import build_graph
+from search import search_artifacts
 from org import people_by_id
 from topics import TOPICS
 from schema import (ApproveRequest, ArtifactResponse, AvailabilityResponse, ChatRequest, ChatResponse, Correction,
@@ -21,7 +22,16 @@ from schema import (ApproveRequest, ArtifactResponse, AvailabilityResponse, Chat
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    embed_query("warm up")  # load the embedding model now, not on the first question
+    # Pay one-time costs at startup, not on the first question: the embedding model, the DB pool,
+    # the people file, and a first vector search.
+    embed_query("warm up")
+    if config.DATABASE_URL:
+        try:
+            with db.connect() as conn:
+                search_artifacts(conn, "warm up", k=1)
+            people_by_id()
+        except Exception as e:  # the API still starts; /health will show db: false
+            print(f"startup warm-up skipped: {e}")
     yield
 
 

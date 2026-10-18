@@ -225,3 +225,13 @@ def test_shorter_fallback():
     from agent.actions import _shorter_fallback
     assert _shorter_fallback("Hi Marcus, I'm Priya. Could we talk? I read #26180. Thanks!") == \
         "Hi Marcus, I'm Priya. Could we talk?"
+
+
+def test_stable_summary_drops_the_daily_part():
+    from agent.compose import stable_summary
+    assert stable_summary("Authored 128 PRs in Messaging, reviewed 19, active 1 day ago") == \
+        "Authored 128 PRs in Messaging, reviewed 19"
+    assert stable_summary("Reviewed 38 of Dana's Messaging PRs, active today") == "Reviewed 38 of Dana's Messaging PRs"
+    assert stable_summary("Authored 2 PRs in Billing, answered 1 question, active 23 days ago") == \
+        "Authored 2 PRs in Billing, answered 1 question"
+    assert stable_summary("Related activity") == "Related activity"

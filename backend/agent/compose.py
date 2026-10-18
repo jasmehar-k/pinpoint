@@ -133,6 +133,14 @@ one relevant PR number from the sources (like #26180) if there is one. Use first
 em dashes."""
 
 
+_ACTIVE = re.compile(r",?\s*active (today|\d+ days? ago)")
+
+
+def stable_summary(summary: str) -> str:
+    """An evidence line without the part that changes every day ("active 2 days ago")."""
+    return _ACTIVE.sub("", summary).strip(" ,")
+
+
 def build_prompt(question: str, hits: list[Hit], asker: Person, recipient: Person | None,
                  experts: list[Expert] = ()) -> str:
     lines = ["Sources:"]
@@ -140,7 +148,9 @@ def build_prompt(question: str, hits: list[Hit], asker: Person, recipient: Perso
         kind = "PR" if h.source == "github" else "THREAD"
         lines.append(f"[{i}] ({kind}) {h.title}\n{' '.join(h.snippet.split())}")
     lines += ["", "People who know this (the only people you may name):"]
-    lines += [f"- {e.name}, {e.role} on {e.team}: {e.evidence_summary}" for e in experts] or ["- none"]
+    # Name order and no "active N days ago": both change day to day and would break the answer cache
+    lines += [f"- {e.name}, {e.role} on {e.team}: {stable_summary(e.evidence_summary)}"
+              for e in sorted(experts, key=lambda e: e.name)] or ["- none"]
     lines += ["", f"Question: {question}", "",
               f"Asker: {asker.name}, {asker.role} on {asker.team}."]
     lines.append(f"Recipient: {recipient.name}, {recipient.role} on {recipient.team}." if recipient

@@ -9,6 +9,8 @@
 Conversation state lives in memory; fine for a single-process demo.
 """
 
+import logging
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -24,6 +26,24 @@ from org import load_org, people_by_id
 from schema import (ChatReply, ChatRequest, ChatResponse, Citation, Expert, Person, ScheduleMeetingPayload,
                     SendMessagePayload)
 from search import Hit, mentioned_prs, search_artifacts
+
+log = logging.getLogger("uvicorn.error")  # shows in the API's console
+
+
+class Stopwatch:
+    """Per-stage timings for one chat, so a slow answer shows where the time went."""
+
+    def __init__(self):
+        self.last, self.laps = time.perf_counter(), []
+
+    def lap(self, name: str) -> None:
+        now = time.perf_counter()
+        self.laps.append((name, now - self.last))
+        self.last = now
+
+    def __str__(self) -> str:
+        return ", ".join(f"{n} {t:.2f}s" for n, t in self.laps) + f" (total {sum(t for _, t in self.laps):.2f}s)"
+
 
 ANSWER_SOURCES = 6
 MAX_THREAD_SOURCES = 3  # keep real PRs in every answer; threads are discussion, PRs are ground truth
@@ -111,18 +131,24 @@ def answer_question(conn, question: str, asker: Person, now: datetime, client=No
                     exclude: tuple[str, ...] = ()) -> Answered:
     """`exclude`: artifacts not to use, e.g. the Slack thread being answered (no self-citation)."""
     people = people_by_id()
+    clock = Stopwatch()
     named = [h for h in mentioned_prs(conn, question) if h.id not in exclude]
     found = [h for h in search_artifacts(conn, question, k=ANSWER_SOURCES * 3, exclude=exclude)
              if h.id not in {n.id for n in named}]
     hits = answer_sources(named + found)
+    clock.lap("search")
     experts = find_experts(conn, question, asker_id=asker.id, now=now, exclude=exclude)
+    clock.lap("experts")
     if experts:
         avail = get_availability(conn, [e.person_id for e in experts], now)
         experts = apply_availability(experts, avail.people)[:EXPERTS_SHOWN]
+    clock.lap("availability")
     routing, contact = routing_text(experts)
     recipient = people[contact.person_id] if contact else None
 
     reply = _llm_answer(client, question, hits, asker, recipient, experts)
+    clock.lap("llm")
+    log.info("chat timing: %s", clock)
     if reply:
         # Only people find_experts returned may be named; anyone else's sentence is cut
         answer = normalize_markers(reply["answer"])
